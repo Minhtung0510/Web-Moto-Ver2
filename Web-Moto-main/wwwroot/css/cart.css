@@ -1,0 +1,114 @@
+/* ===== Hero ===== */
+.cart-hero{
+  position:relative; padding:28px 20px; margin-bottom:18px;
+  border-radius:16px; overflow:hidden; background:rgba(20,20,28,.6); 
+  backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.08);
+}
+.cart-glow{
+  position:absolute; inset:-60px; filter: blur(60px);
+  background:
+    radial-gradient(120px 80px at 20% 20%, #7c4dff55, transparent 60%),
+    radial-gradient(140px 90px at 80% 30%, #00e5ff55, transparent 60%),
+    radial-gradient(180px 120px at 50% 90%, #00e67655, transparent 60%);
+  animation: floatGlow 12s ease-in-out infinite;
+  z-index:0;
+}
+@keyframes floatGlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.cart-title{position:relative; z-index:1; color:#fff; margin:0}
+.cart-sub{position:relative; z-index:1; color:#cfd8dc; margin:4px 0 0 0}
+
+/* ===== Layout ===== */
+.cart-wrapper{display:flex; flex-direction:column; gap:14px}
+.cart-row{
+  display:grid; grid-template-columns:88px 1fr auto auto; gap:14px; align-items:center;
+  padding:14px; border-radius:14px; background:#0f1117; border:1px solid #1f2430;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  position:relative; overflow:hidden;
+}
+.cart-row::before{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:0;
+  background: linear-gradient(120deg, transparent, rgba(124,77,255,.08), transparent);
+  transition: opacity .25s;
+}
+.cart-row:hover{ transform: translateY(-2px); border-color:#2c3342; box-shadow:0 8px 24px rgba(0,0,0,.25) }
+.cart-row:hover::before{ opacity:1 }
+
+.cart-media img{
+  width:88px; height:88px; object-fit:contain; border-radius:10px;
+  background:#0b0d12; border:1px solid #1d2230; padding:8px;
+  transition: transform .25s ease;
+}
+.cart-row:hover .cart-media img{ transform: scale(1.04) }
+
+.cart-info{min-width:0}
+.cart-name{
+  color:#e3f2fd; margin:0 0 6px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.cart-meta{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  font-size:12px; padding:4px 8px; border-radius:999px; color:#b0bec5;
+  background:rgba(38,198,218,.08); border:1px solid rgba(38,198,218,.25)
+}
+
+.cart-price .price{color:#ff8a65; font-weight:700}
+.cart-actions{text-align:right}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:12px; text-decoration:none; transition:.2s}
+.btn-gradient{
+  color:#0b0d12; font-weight:700; border:0;
+  background:linear-gradient(135deg,#7c4dff 0%,#00e5ff 50%,#00e676 100%);
+  box-shadow:0 8px 24px rgba(0,229,255,.25);
+}
+.btn-gradient:hover{ filter:brightness(1.08) }
+.btn-outline{
+  color:#cfd8dc; border:1px solid #374151; background:transparent;
+}
+.btn-outline:hover{ border-color:#4b5563; background:#131722 }
+.btn-ghost{
+  color:#90a4ae; border:1px solid rgba(207,216,220,.15); background:rgba(255,255,255,.02);
+}
+.btn-ghost:hover{ color:#ef9a9a; border-color:rgba(239,154,154,.35); background:rgba(239,154,154,.06) }
+
+.pulse{ animation:pulseBtn 2.2s ease-in-out infinite }
+@keyframes pulseBtn{
+  0%,100%{ box-shadow:0 0 0 0 rgba(0,229,255,.0) }
+  50%{ box-shadow:0 0 0 12px rgba(0,229,255,.10) }
+}
+
+/* ===== Empty ===== */
+.empty-card{
+  text-align:center; padding:48px 24px; border-radius:16px;
+  background:#0f1117; border:1px solid #1f2430;
+}
+.empty-icon{
+  width:84px; height:84px; display:inline-flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#7c4dff,#00e5ff); color:#fff; border-radius:20px; margin-bottom:12px;
+  animation: tilt 2s ease-in-out infinite;
+}
+.empty-icon i{ font-size:36px }
+@keyframes tilt{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg)}}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px){
+  .cart-row{ grid-template-columns:70px 1fr; grid-template-areas:
+      "media info"
+      "price actions"; row-gap:10px }
+  .cart-media{ grid-area: media }
+  .cart-info{ grid-area: info }
+  .cart-price{ grid-area: price }
+  .cart-actions{ grid-area: actions }
+  .cart-footer{ flex-direction:column; gap:10px }
+}
+
+/* ===== Footer ===== */
+.cart-footer{
+  margin-top:8px; display:flex; justify-content:flex-end; gap:12px; align-items:center
+}
+/* Ripple */
+.btn-gradient{ position:relative; overflow:hidden }
+.ripple{
+  position:absolute; border-radius:50%; transform:scale(0);
+  background:rgba(255,255,255,.5); animation:ripple .6s linear; pointer-events:none
+}
+@keyframes ripple{to{ transform:scale(3); opacity:0 }}

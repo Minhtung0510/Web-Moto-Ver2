@@ -1,0 +1,59 @@
+@model IEnumerable<MotoBikeStore.Models.Product>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Giỏ hàng";
+    var items = Model?.ToList() ?? new List<MotoBikeStore.Models.Product>();
+}
+<link rel="stylesheet" href="~/css/cart.css" asp-append-version="true" />
+<script defer src="~/js/cart.js" asp-append-version="true"></script>
+
+<div class="cart-hero">
+  <div class="cart-glow"></div>
+  <h2 class="cart-title"><i class="fas fa-shopping-bag me-2"></i>Giỏ hàng</h2>
+  <p class="cart-sub">Trải nghiệm thanh toán mượt như lụa</p>
+</div>
+
+@if (!items.Any())
+{
+  <div class="empty-card">
+    <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+    <h5>Giỏ hàng trống</h5>
+    <p>Tiếp tục khám phá sản phẩm phù hợp với bạn.</p>
+    <a class="btn btn-gradient" href="/">Tiếp tục mua sắm</a>
+  </div>
+}
+else
+{
+  <div class="cart-wrapper">
+    @foreach (var p in items)
+    {
+      <div class="cart-row">
+        <div class="cart-media">
+          <img src="@p.ImageUrl" alt="@p.Name" />
+        </div>
+        <div class="cart-info">
+          <h6 class="cart-name">@p.Name</h6>
+          <div class="cart-meta">
+            <span class="chip">Hàng chính hãng</span>
+            <span class="chip">Đổi trả 7 ngày</span>
+          </div>
+        </div>
+        <div class="cart-price">
+          <span class="price">@p.Price.ToString("N0")₫</span>
+        </div>
+        <div class="cart-actions">
+          <a class="btn btn-ghost" href="/Cart/Remove/@p.Id" data-remove>
+            <i class="fas fa-trash-alt me-1"></i>Bỏ
+          </a>
+        </div>
+      </div>
+    }
+
+    <div class="cart-footer">
+      <a class="btn btn-outline" href="/">Tiếp tục mua sắm</a>
+      <a class="btn btn-gradient pulse" href="/Orders/Checkout">
+        <i class="fas fa-credit-card me-2"></i>Thanh toán
+      </a>
+    </div>
+  </div>
+}

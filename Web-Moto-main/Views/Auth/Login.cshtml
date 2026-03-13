@@ -1,0 +1,550 @@
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Đăng nhập"; }
+
+<style>
+.auth-container {
+  min-height: 100vh;
+  background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+@@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.auth-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: pulse 8s ease-in-out infinite;
+}
+
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.shape {
+  position: absolute;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  animation: float 20s infinite ease-in-out;
+}
+
+.shape:nth-child(1) {
+  width: 80px;
+  height: 80px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.shape:nth-child(2) {
+  width: 120px;
+  height: 120px;
+  top: 70%;
+  left: 80%;
+  animation-delay: 2s;
+}
+
+.shape:nth-child(3) {
+  width: 100px;
+  height: 100px;
+  top: 40%;
+  left: 70%;
+  animation-delay: 4s;
+}
+
+@@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-30px) rotate(180deg); }
+}
+
+.auth-card {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+  width: 100%;
+  max-width: 450px;
+  position: relative;
+  z-index: 2;
+  animation: slideInUp 0.8s ease;
+}
+
+@@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+  background-size: 300% 100%;
+  animation: gradientMove 3s linear infinite;
+}
+
+@@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.auth-header {
+  text-align: center;
+  padding: 40px 40px 20px;
+}
+
+.auth-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: white;
+  animation: bounce 2s infinite;
+}
+
+@@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.auth-title {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.auth-subtitle {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.auth-body {
+  padding: 20px 40px 40px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-label i {
+  color: #667eea;
+}
+
+.form-control-wrapper {
+  position: relative;
+}
+
+.form-control {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px 16px 12px 45px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus + .input-icon {
+  color: #667eea;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: #667eea;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.btn-auth {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.btn-auth::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-auth:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-auth:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-auth:active {
+  transform: translateY(-1px);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 30px 0;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider::before {
+  margin-right: 15px;
+}
+
+.divider::after {
+  margin-left: 15px;
+}
+
+.social-login {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.btn-social {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-social:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.btn-social i {
+  font-size: 1.3rem;
+}
+
+.btn-facebook { color: #1877f2; }
+.btn-google { color: #ea4335; }
+
+.auth-footer {
+  text-align: center;
+  padding: 20px;
+  background: rgba(102, 126, 234, 0.05);
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.auth-footer a {
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.auth-footer a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.alert {
+  border-radius: 12px;
+  border: none;
+  padding: 15px;
+  margin-bottom: 20px;
+  animation: slideInDown 0.5s ease;
+}
+
+@@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.features-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 30px;
+  padding: 0;
+  list-style: none;
+}
+
+.features-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.features-list i {
+  color: #11998e;
+  font-size: 1rem;
+}
+
+@@media (max-width: 576px) {
+  .auth-card {
+    margin: 20px;
+    border-radius: 20px;
+  }
+  
+  .auth-header,
+  .auth-body {
+    padding: 30px 25px;
+  }
+  
+  .auth-title {
+    font-size: 1.6rem;
+  }
+  
+  .social-login {
+    flex-direction: column;
+  }
+  
+  .features-list {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<div class="auth-container">
+  <div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+  
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <i class="fas fa-motorcycle"></i>
+      </div>
+      <h3 class="auth-title">Đăng nhập</h3>
+      <p class="auth-subtitle">Chào mừng bạn trở lại! ✨</p>
+    </div>
+    
+    <div class="auth-body">
+      @if(TempData["SuccessMessage"] != null)
+      {
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle me-2"></i>
+          @TempData["SuccessMessage"]
+        </div>
+      }
+      
+      <form asp-controller="Auth" asp-action="Login" method="post" id="loginForm">
+        <input type="hidden" name="returnUrl" value="@(ViewData["ReturnUrl"] ?? "")" />
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+        
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-envelope"></i>
+            Email
+          </label>
+          <div class="form-control-wrapper">
+            <input type="email" name="email" class="form-control" placeholder="your@email.com" required />
+            <i class="fas fa-envelope input-icon"></i>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-lock"></i>
+            Mật khẩu
+          </label>
+          <div class="form-control-wrapper">
+            <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required />
+            <i class="fas fa-lock input-icon"></i>
+            <button type="button" class="password-toggle" onclick="togglePassword()">
+              <i class="far fa-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn-auth">
+          <i class="fas fa-sign-in-alt me-2"></i>
+          Đăng nhập ngay
+        </button>
+      </form>
+      
+      <div class="divider">Hoặc đăng nhập với</div>
+      
+      <div class="social-login">
+        <button class="btn-social btn-facebook">
+          <i class="fab fa-facebook"></i>
+          Facebook
+        </button>
+        <button class="btn-social btn-google">
+          <i class="fab fa-google"></i>
+          Google
+        </button>
+      </div>
+      
+      <ul class="features-list">
+        <li><i class="fas fa-check-circle"></i> Bảo mật cao</li>
+        <li><i class="fas fa-check-circle"></i> Nhanh chóng</li>
+        <li><i class="fas fa-check-circle"></i> Dễ sử dụng</li>
+        <li><i class="fas fa-check-circle"></i> Hỗ trợ 24/7</li>
+      </ul>
+    </div>
+    
+    <div class="auth-footer">
+      Chưa có tài khoản? <a href="/Auth/Register">Đăng ký ngay</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePassword() {
+  const passwordInput = document.getElementById('password');
+  const toggleIcon = document.getElementById('toggleIcon');
+  
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    toggleIcon.classList.remove('fa-eye');
+    toggleIcon.classList.add('fa-eye-slash');
+  } else {
+    passwordInput.type = 'password';
+    toggleIcon.classList.remove('fa-eye-slash');
+    toggleIcon.classList.add('fa-eye');
+  }
+}
+
+// Form animation on submit
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  const btn = this.querySelector('.btn-auth');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang đăng nhập...';
+  btn.disabled = true;
+});
+
+// Input focus animation
+document.querySelectorAll('.form-control').forEach(input => {
+  input.addEventListener('focus', function() {
+    this.parentElement.style.transform = 'scale(1.02)';
+  });
+  
+  input.addEventListener('blur', function() {
+    this.parentElement.style.transform = 'scale(1)';
+  });
+});
+</script>

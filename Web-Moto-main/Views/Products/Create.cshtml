@@ -1,0 +1,166 @@
+@model MotoBikeStore.Models.Product
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Thêm sản phẩm"; }
+
+<div class="container py-4">
+  <h3 class="mb-4"><i class="fas fa-plus me-2"></i>Thêm sản phẩm mới</h3>
+  
+  <form method="post" action="/Products/Create" enctype="multipart/form-data" class="card">
+    <div class="card-body">
+      @Html.AntiForgeryToken()
+      
+      @if(TempData["ErrorMessage"] != null)
+      {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+      }
+      
+      <div class="row g-3">
+        <!-- Tên sản phẩm -->
+        <div class="col-md-12">
+          <label class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+          <input type="text" name="Name" class="form-control" placeholder="VD: Honda Air Blade 160" required />
+        </div>
+        
+        <!-- Thương hiệu -->
+        <div class="col-md-4">
+          <label class="form-label">Thương hiệu <span class="text-danger">*</span></label>
+          <select name="Brand" class="form-select" required>
+            <option value="">-- Chọn --</option>
+            <option value="Honda">Honda</option>
+            <option value="Yamaha">Yamaha</option>
+            <option value="Suzuki">Suzuki</option>
+            <option value="SYM">SYM</option>
+            <option value="Piaggio">Piaggio</option>
+            <option value="Vespa">Vespa</option>
+          </select>
+        </div>
+        
+        <!-- Danh mục -->
+        <div class="col-md-4">
+          <label class="form-label">Danh mục</label>
+          <select name="CategoryId" class="form-select">
+            <option value="">-- Chọn --</option>
+            @foreach(var cat in MotoBikeStore.Services.InMemoryDataStore.Categories)
+            {
+              <option value="@cat.Id">@cat.Name</option>
+            }
+          </select>
+        </div>
+        
+        <!-- Nhãn -->
+        <div class="col-md-4">
+          <label class="form-label">Nhãn đặc biệt</label>
+          <select name="Badge" class="form-select">
+            <option value="">-- Không --</option>
+            <option value="new">🆕 Mới</option>
+            <option value="hot">🔥 Hot</option>
+            <option value="sale">💰 Sale</option>
+          </select>
+        </div>
+        
+        <!-- Giá bán -->
+        <div class="col-md-4">
+          <label class="form-label">Giá bán (₫) <span class="text-danger">*</span></label>
+          <input type="number" name="Price" class="form-control" step="1000" placeholder="48990000" required />
+        </div>
+        
+        <!-- Giá cũ -->
+        <div class="col-md-4">
+          <label class="form-label">Giá cũ (₫)</label>
+          <input type="number" name="OldPrice" class="form-control" step="1000" placeholder="57500000" />
+        </div>
+        
+        <!-- Giảm giá % -->
+        <div class="col-md-4">
+          <label class="form-label">Giảm giá (%)</label>
+          <input type="number" name="DiscountPercent" class="form-control" min="0" max="100" placeholder="15" />
+        </div>
+        
+        <!-- Động cơ -->
+        <div class="col-md-4">
+          <label class="form-label">Động cơ <span class="text-danger">*</span></label>
+          <input type="text" name="Engine" class="form-control" placeholder="VD: 160cc" required />
+        </div>
+        
+        <!-- Nhiên liệu -->
+        <div class="col-md-4">
+          <label class="form-label">Bình nhiên liệu <span class="text-danger">*</span></label>
+          <input type="text" name="Fuel" class="form-control" placeholder="VD: 5.5L" required />
+        </div>
+        
+        <!-- Đánh giá -->
+        <div class="col-md-4">
+          <label class="form-label">Đánh giá</label>
+          <input type="number" name="Rating" class="form-control" step="0.1" min="0" max="5" value="4.5" />
+        </div>
+        
+        <!-- Tồn kho -->
+        <div class="col-md-4">
+          <label class="form-label">Tồn kho</label>
+          <input type="number" name="Stock" class="form-control" value="100" />
+        </div>
+        
+        <!-- Màu sắc -->
+        <div class="col-md-4">
+          <label class="form-label">Màu sắc</label>
+          <input type="text" name="Color" class="form-control" placeholder="VD: Đỏ, Đen, Xám" />
+        </div>
+        
+        <!-- Bảo hành -->
+        <div class="col-md-4">
+          <label class="form-label">Bảo hành</label>
+          <input type="text" name="Warranty" class="form-control" placeholder="VD: 3 năm" />
+        </div>
+        
+        <!-- Upload ảnh -->
+        <div class="col-md-12">
+          <label class="form-label">Hình ảnh sản phẩm <span class="text-danger">*</span></label>
+          <input type="file" name="ImageFile" id="imageUpload" class="form-control" 
+                 accept="image/png,image/jpeg,image/jpg,image/webp" required />
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Chọn file ảnh (PNG, JPG, WebP). Kích thước đề xuất: 800x600px
+          </small>
+        </div>
+        
+        <!-- Preview -->
+        <div class="col-md-12">
+          <img id="imagePreview" src="#" alt="Preview" 
+               style="max-width:300px;max-height:200px;display:none;border:2px solid #28a745;padding:10px;border-radius:8px;" />
+        </div>
+        
+        <!-- Mô tả -->
+        <div class="col-md-12">
+          <label class="form-label">Mô tả</label>
+          <textarea name="Description" class="form-control" rows="3" 
+                    placeholder="Mô tả chi tiết về sản phẩm..."></textarea>
+        </div>
+        
+        <!-- Buttons -->
+        <div class="col-12 mt-4">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-save me-2"></i>Lưu sản phẩm
+          </button>
+          <a href="/Products" class="btn btn-secondary btn-lg ms-2">Hủy</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('imagePreview');
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.style.display = 'none';
+  }
+});
+</script>

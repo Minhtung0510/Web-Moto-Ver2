@@ -1,0 +1,605 @@
+@model MotoBikeStore.Models.Order
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Thanh toán chuyển khoản"; }
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Success Step Indicator -->
+      <div class="payment-steps mb-4">
+        <div class="step completed">
+          <div class="step-icon"><i class="fas fa-check"></i></div>
+          <div class="step-label">Đặt hàng</div>
+        </div>
+        <div class="step-line completed"></div>
+        <div class="step active">
+          <div class="step-icon"><i class="fas fa-qrcode"></i></div>
+          <div class="step-label">Thanh toán</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step">
+          <div class="step-icon"><i class="fas fa-truck"></i></div>
+          <div class="step-label">Giao hàng</div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-lg">
+        <div class="card-header bg-gradient-primary text-white text-center py-4">
+          <h3 class="mb-0">
+            <i class="fas fa-qrcode me-2"></i>Quét mã QR để thanh toán
+          </h3>
+          <p class="mb-0 mt-2 opacity-75">Đơn hàng: <strong>#@Model.OrderCode</strong></p>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Payment Amount -->
+          <div class="payment-amount-section text-center mb-4">
+            <div class="text-muted mb-2">Số tiền cần thanh toán</div>
+            <h1 class="display-3 fw-bold text-danger mb-0">
+              @Model.Total.ToString("N0")₫
+            </h1>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- QR Code Section -->
+          <div class="row g-4">
+            <!-- VietQR Code -->
+            <div class="col-md-6">
+              <div class="qr-code-container">
+                <div class="qr-code-header">
+                  <img src="https://vietqr.io/img/logo.svg" alt="VietQR" style="height:30px" />
+                  <h5 class="mt-2 mb-3">Quét mã VietQR</h5>
+                </div>
+                
+                <div class="qr-code-wrapper">
+                  <img id="vietQrCode" src="" alt="VietQR Code" class="qr-code-image" />
+                  <div class="qr-loading">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="mt-2">Đang tạo mã QR...</div>
+                  </div>
+                </div>
+
+                <div class="qr-code-info mt-3">
+                  <div class="alert alert-info mb-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <small>Hỗ trợ tất cả ứng dụng ngân hàng tại Việt Nam</small>
+                  </div>
+                  <div class="bank-logos d-flex justify-content-center gap-2 flex-wrap">
+                    <img src="https://api.vietqr.io/img/ICB.png" alt="Vietcombank" class="bank-logo" />
+                    <img src="https://api.vietqr.io/img/VCB.png" alt="Vietcombank" class="bank-logo" />
+                    <img src="https://api.vietqr.io/img/TCB.png" alt="Techcombank" class="bank-logo" />
+                    <img src="https://api.vietqr.io/img/MB.png" alt="MBBank" class="bank-logo" />
+                    <img src="https://api.vietqr.io/img/ACB.png" alt="ACB" class="bank-logo" />
+                    <img src="https://api.vietqr.io/img/TPB.png" alt="TPBank" class="bank-logo" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="col-md-6">
+              <div class="payment-instructions">
+                <h5 class="mb-3"><i class="fas fa-mobile-alt me-2 text-primary"></i>Hướng dẫn thanh toán</h5>
+                
+                <div class="instruction-step">
+                  <div class="step-number">1</div>
+                  <div class="step-content">
+                    <strong>Mở ứng dụng Banking</strong>
+                    <p class="text-muted mb-0">Mở app ngân hàng hoặc ví điện tử của bạn</p>
+                  </div>
+                </div>
+
+                <div class="instruction-step">
+                  <div class="step-number">2</div>
+                  <div class="step-content">
+                    <strong>Quét mã QR</strong>
+                    <p class="text-muted mb-0">Chọn "Quét mã QR" và quét mã bên trái</p>
+                  </div>
+                </div>
+
+                <div class="instruction-step">
+                  <div class="step-number">3</div>
+                  <div class="step-content">
+                    <strong>Xác nhận thanh toán</strong>
+                    <p class="text-muted mb-0">Kiểm tra thông tin và xác nhận chuyển khoản</p>
+                  </div>
+                </div>
+
+                <div class="instruction-step mb-0">
+                  <div class="step-number">4</div>
+                  <div class="step-content">
+                    <strong>Hoàn tất</strong>
+                    <p class="text-muted mb-0">Đơn hàng sẽ tự động xác nhận sau khi nhận được tiền</p>
+                  </div>
+                </div>
+
+                <div class="alert alert-warning mt-4">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Lưu ý:</strong>
+                  <ul class="mb-0 mt-2 small">
+                    <li>Vui lòng thanh toán đúng số tiền <strong>@Model.Total.ToString("N0")₫</strong></li>
+                    <li>Không chỉnh sửa nội dung chuyển khoản</li>
+                    <li>Hệ thống tự động xác nhận trong 1-5 phút</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Details -->
+          <div class="payment-details-section mt-4">
+            <h5 class="mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>Thông tin chuyển khoản</h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="detail-card">
+                  <div class="detail-label">Ngân hàng</div>
+                  <div class="detail-value">Vietcombank</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-card">
+                  <div class="detail-label">Số tài khoản</div>
+                  <div class="detail-value">1031293240</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-card">
+                  <div class="detail-label">Chủ tài khoản</div>
+                  <div class="detail-value">TRAN DUY</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="detail-card">
+                  <div class="detail-label">Nội dung chuyển khoản</div>
+                  <div class="detail-value">
+                    <span id="transferContent">@Model.OrderCode MOTOBIKE</span>
+                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="copyContent()">
+                      <i class="fas fa-copy"></i> Sao chép
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alternative Methods -->
+          <div class="alternative-methods mt-4">
+            <h6 class="text-muted mb-3">Hoặc thanh toán qua:</h6>
+            <div class="row g-2">
+              <div class="col-6 col-md-3">
+                <button class="payment-method-btn" onclick="openMomo()">
+                  <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" />
+                  <span>MoMo</span>
+                </button>
+              </div>
+              <div class="col-6 col-md-3">
+                <button class="payment-method-btn" onclick="openZaloPay()">
+                  <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Icon-ZaloPay-Square.png" alt="ZaloPay" />
+                  <span>ZaloPay</span>
+                </button>
+              </div>
+              <div class="col-6 col-md-3">
+                <button class="payment-method-btn" onclick="openVNPay()">
+                  <img src="https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg" alt="VNPay" />
+                  <span>VNPay</span>
+                </button>
+              </div>
+              <div class="col-6 col-md-3">
+                <button class="payment-method-btn" onclick="openShopeePay()">
+                  <img src="https://salt.tikicdn.com/ts/upload/92/b2/78/1b3b9cda5208b323eb9ec56b84c7eb87.png" alt="ShopeePay" />
+                  <span>ShopeePay</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-light text-center py-3">
+          <div class="d-flex justify-content-center gap-3">
+            <a href="/Orders/MyOrders" class="btn btn-primary">
+              <i class="fas fa-receipt me-2"></i>Xem đơn hàng của tôi
+            </a>
+            <a href="/" class="btn btn-outline-secondary">
+              <i class="fas fa-home me-2"></i>Về trang chủ
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">Chi tiết đơn hàng</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <tbody>
+                @foreach(var item in Model.Details)
+                {
+                  <tr>
+                    <td>
+                      <img src="@item.Product.ImageUrl" style="width:40px;height:40px;object-fit:contain" class="me-2" />
+                      @item.Product.Name
+                    </td>
+                    <td class="text-end">x@item.Quantity</td>
+                    <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("N0"))₫</td>
+                  </tr>
+                }
+                <tr class="table-light fw-bold">
+                  <td colspan="2">Tổng cộng:</td>
+                  <td class="text-end text-danger">@Model.Total.ToString("N0")₫</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS -->
+<style>
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Steps */
+.payment-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.step-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.step.active .step-icon {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.step.completed .step-icon {
+  background: #28a745;
+  color: white;
+}
+
+.step-label {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.step.active .step-label {
+  color: #667eea;
+}
+
+.step-line {
+  width: 80px;
+  height: 2px;
+  background: #e0e0e0;
+  margin: 0 10px;
+}
+
+.step-line.completed {
+  background: #28a745;
+}
+
+@@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Payment Amount */
+.payment-amount-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 30px;
+  border-radius: 15px;
+}
+
+/* QR Code */
+.qr-code-container {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+}
+
+.qr-code-header h5 {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.qr-code-wrapper {
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-code-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  display: none;
+}
+
+.qr-code-image.loaded {
+  display: block;
+}
+
+.qr-loading {
+  text-align: center;
+  color: #999;
+}
+
+.bank-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: contain;
+  border: 1px solid #e0e0e0;
+  padding: 4px;
+  background: white;
+}
+
+/* Instructions */
+.instruction-step {
+  display: flex;
+  align-items: flex-start;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.step-number {
+  width: 35px;
+  height: 35px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-right: 15px;
+}
+
+.step-content strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+/* Details Card */
+.detail-card {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Payment Method Buttons */
+.payment-method-btn {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-method-btn:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.payment-method-btn img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.payment-method-btn span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+</style>
+
+<!-- JavaScript -->
+<script>
+// ✅ VietQR API - Tạo QR Code THẬT
+function generateVietQR() {
+  // Thông tin tài khoản (CẤU HÌNH CỦA BẠN)
+  const bankId = "970436";      // Vietcombank
+  const accountNo = "1031293240";
+  const accountName = "TRAN DUY";
+  const amount = @Model.Total;
+  const description = "@Model.OrderCode MOTOBIKE";
+  
+  // VietQR API v2 - Tạo QR Code thật
+  // Format: https://img.vietqr.io/image/{BANK_ID}-{ACCOUNT_NO}-{TEMPLATE}.png?amount={AMOUNT}&addInfo={DESCRIPTION}&accountName={ACCOUNT_NAME}
+  
+  const template = "compact2"; // compact, compact2, qr_only, print
+  const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${amount}&addInfo=${encodeURIComponent(description)}&accountName=${encodeURIComponent(accountName)}`;
+  
+  console.log("VietQR URL:", qrUrl);
+  
+  // Load QR Code
+  const img = document.getElementById('vietQrCode');
+  const loading = document.querySelector('.qr-loading');
+  
+  img.onload = function() {
+    loading.style.display = 'none';
+    img.classList.add('loaded');
+  };
+  
+  img.onerror = function() {
+    loading.innerHTML = '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i><br>Không thể tạo mã QR. Vui lòng thử lại!</div>';
+  };
+  
+  img.src = qrUrl;
+}
+
+// Copy nội dung chuyển khoản
+function copyContent() {
+  const content = document.getElementById('transferContent').textContent;
+  navigator.clipboard.writeText(content).then(() => {
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Đã sao chép!';
+    btn.classList.remove('btn-outline-primary');
+    btn.classList.add('btn-success');
+    
+    setTimeout(() => {
+      btn.innerHTML = originalHtml;
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-outline-primary');
+    }, 2000);
+  }).catch(err => {
+    alert('Không thể sao chép. Vui lòng copy thủ công!');
+  });
+}
+
+// Open payment apps
+function openMomo() {
+  // Deep link MoMo (cần có MoMo Partner API để tạo link thực)
+  alert('Tính năng thanh toán MoMo đang được phát triển.\n\nVui lòng quét mã QR bằng app MoMo!');
+}
+
+function openZaloPay() {
+  alert('Tính năng thanh toán ZaloPay đang được phát triển.\n\nVui lòng quét mã QR bằng app ZaloPay!');
+}
+
+function openVNPay() {
+  alert('Tính năng thanh toán VNPay đang được phát triển.\n\nVui lòng quét mã QR bằng app VNPay!');
+}
+
+function openShopeePay() {
+  alert('Tính năng thanh toán ShopeePay đang được phát triển.\n\nVui lòng quét mã QR bằng app ShopeePay!');
+}
+
+// Auto check payment status (giả lập - thực tế cần webhook từ ngân hàng)
+let checkCount = 0;
+const maxChecks = 60; // Check trong 5 phút (mỗi 5s)
+
+function checkPaymentStatus() {
+  checkCount++;
+  
+  // Giả lập check (thực tế gọi API backend để check)
+  console.log(`Checking payment status... (${checkCount}/${maxChecks})`);
+  
+  // TODO: Gọi API backend để check xem đã nhận được tiền chưa
+  // fetch('/Orders/CheckPaymentStatus?orderId=@Model.Id')
+  //   .then(res => res.json())
+  //   .then(data => {
+  //     if (data.isPaid) {
+  //       showPaymentSuccess();
+  //     }
+  //   });
+  
+  if (checkCount < maxChecks) {
+    setTimeout(checkPaymentStatus, 5000); // Check mỗi 5 giây
+  }
+}
+
+function showPaymentSuccess() {
+  // Show success animation
+  alert('✅ Đã nhận được thanh toán!\n\nĐơn hàng của bạn đang được xử lý.');
+  window.location.href = '/Orders/MyOrders';
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  generateVietQR();
+  
+  // Start checking payment status
+  setTimeout(checkPaymentStatus, 5000);
+  
+  // Show countdown timer
+  showCountdownTimer();
+});
+
+// Countdown timer
+function showCountdownTimer() {
+  const timeLimit = 15 * 60; // 15 phút
+  let timeLeft = timeLimit;
+  
+  const timerElement = document.createElement('div');
+  timerElement.className = 'alert alert-info mt-3 text-center';
+  timerElement.innerHTML = '<i class="fas fa-clock me-2"></i>Vui lòng thanh toán trong: <strong id="countdown">15:00</strong>';
+  
+  document.querySelector('.card-body').insertBefore(timerElement, document.querySelector('.payment-amount-section'));
+  
+  const countdownEl = document.getElementById('countdown');
+  
+  const interval = setInterval(() => {
+    timeLeft--;
+    
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    
+    countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 60) {
+      timerElement.classList.remove('alert-info');
+      timerElement.classList.add('alert-warning');
+    }
+    
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      timerElement.classList.remove('alert-warning');
+      timerElement.classList.add('alert-danger');
+      timerElement.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Đã hết thời gian thanh toán. Vui lòng đặt hàng lại!';
+    }
+  }, 1000);
+}
+</script>

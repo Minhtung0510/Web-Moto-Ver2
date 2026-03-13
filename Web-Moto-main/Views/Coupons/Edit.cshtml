@@ -1,0 +1,78 @@
+@model MotoBikeStore.Models.Coupon
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Sửa mã giảm giá"; }
+
+<div class="container py-4">
+  <h3 class="mb-4"><i class="fas fa-edit me-2"></i>Sửa mã giảm giá: @Model.Code</h3>
+  
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <form method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Code" />
+            <input type="hidden" asp-for="UsedCount" />
+            
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            
+            <!-- Hiển thị mã (read-only) -->
+            <div class="mb-4">
+              <label class="form-label">Mã giảm giá</label>
+              <input type="text" class="form-control form-control-lg" value="@Model.Code" readonly />
+              <small class="text-muted">Đã sử dụng: @Model.UsedCount lần</small>
+            </div>
+            
+            <!-- Giảm giá % -->
+            <div class="mb-4">
+              <label class="form-label">Giảm giá (%) <span class="text-danger">*</span></label>
+              <div class="input-group input-group-lg">
+                <input asp-for="DiscountPercent" type="number" class="form-control" 
+                       min="1" max="100" required />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            
+            <!-- Hạn sử dụng -->
+            <div class="mb-4">
+              <label class="form-label">Hạn sử dụng <span class="text-danger">*</span></label>
+              <input asp-for="EndDate" type="date" class="form-control form-control-lg" 
+                     min="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+            </div>
+            
+            <!-- Trạng thái -->
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" 
+                       id="activeSwitch" style="width:3em;height:1.5em" />
+                <label class="form-check-label" for="activeSwitch">
+                  <strong>Kích hoạt mã này</strong>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Hidden fields -->
+            <input type="hidden" asp-for="Description" />
+            <input type="hidden" asp-for="StartDate" />
+            <input type="hidden" asp-for="MinOrderAmount" />
+            <input type="hidden" asp-for="MaxDiscountAmount" />
+            <input type="hidden" asp-for="UsageLimit" />
+            <input type="hidden" asp-for="DiscountAmount" />
+            
+            <!-- Buttons -->
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-save me-2"></i>Cập nhật
+              </button>
+              <a href="/Coupons" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+}

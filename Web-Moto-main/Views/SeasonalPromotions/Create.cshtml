@@ -1,0 +1,114 @@
+@model MotoBikeStore.Services.SeasonalPromotion
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Tạo chương trình khuyến mãi"; }
+
+<div class="container py-4">
+  <h3 class="mb-4"><i class="fas fa-plus me-2"></i>Tạo chương trình khuyến mãi theo mùa</h3>
+  
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <form method="post">
+            @Html.AntiForgeryToken()
+            
+            @if(TempData["ErrorMessage"] != null)
+            {
+              <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+            }
+            
+            <div class="mb-3">
+              <label class="form-label">Tên chương trình <span class="text-danger">*</span></label>
+              <input type="text" name="Name" class="form-control" 
+                     placeholder="VD: Flash Sale Cuối Tuần" required />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Mô tả</label>
+              <textarea name="Description" class="form-control" rows="2" 
+                        placeholder="Mô tả ngắn về chương trình..."></textarea>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Giảm giá (%) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="number" name="DiscountPercent" class="form-control" 
+                         min="1" max="100" value="10" required />
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Áp dụng cho <span class="text-danger">*</span></label>
+                <select name="ApplyTo" id="applyToSelect" class="form-select" required>
+                  <option value="All">Tất cả sản phẩm</option>
+                  <option value="Category">Theo danh mục</option>
+                  <option value="Brand">Theo thương hiệu</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="mb-3" id="categoryField" style="display:none">
+              <label class="form-label">Chọn danh mục</label>
+              <select name="CategoryId" class="form-select">
+                <option value="">-- Chọn danh mục --</option>
+                @foreach(var cat in ViewBag.Categories as List<MotoBikeStore.Models.Category>)
+                {
+                  <option value="@cat.Id">@cat.Name</option>
+                }
+              </select>
+            </div>
+            
+            <div class="mb-3" id="brandField" style="display:none">
+              <label class="form-label">Chọn thương hiệu</label>
+              <select name="Brand" class="form-select">
+                <option value="">-- Chọn thương hiệu --</option>
+                @foreach(var brand in ViewBag.Brands as List<string>)
+                {
+                  <option value="@brand">@brand</option>
+                }
+              </select>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
+                <input type="date" name="StartDate" class="form-control" 
+                       value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Ngày kết thúc <span class="text-danger">*</span></label>
+                <input type="date" name="EndDate" class="form-control" 
+                       value="@DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd")" required />
+              </div>
+            </div>
+            
+            <div class="form-check mb-4">
+              <input type="checkbox" name="IsActive" value="true" class="form-check-input" 
+                     id="activeCheck" checked />
+              <label class="form-check-label" for="activeCheck">
+                <strong>Kích hoạt ngay</strong>
+              </label>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-save me-2"></i>Tạo chương trình
+              </button>
+              <a href="/SeasonalPromotions" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('applyToSelect').addEventListener('change', function() {
+  const val = this.value;
+  document.getElementById('categoryField').style.display = val === 'Category' ? 'block' : 'none';
+  document.getElementById('brandField').style.display = val === 'Brand' ? 'block' : 'none';
+});
+</script>

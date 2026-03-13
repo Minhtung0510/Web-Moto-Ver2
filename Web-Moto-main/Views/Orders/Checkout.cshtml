@@ -1,0 +1,329 @@
+@model MotoBikeStore.Models.Order
+@{
+    Layout="~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"]="Thanh toán";
+    var products = ViewBag.Products as List<MotoBikeStore.Models.Product> ?? new List<MotoBikeStore.Models.Product>();
+    decimal subtotal = ViewBag.Subtotal is decimal d ? d : 0m;
+    decimal seasonalPotential = ViewBag.PotentialSeasonalDiscount is decimal s ? s : 0m;
+    var seasonalPromos = ViewBag.SeasonalPromotions as List<MotoBikeStore.Services.SeasonalPromotion> ?? new List<MotoBikeStore.Services.SeasonalPromotion>();
+}
+<link rel="stylesheet" href="~/css/checkout.css" asp-append-version="true" />
+<div class="container py-5">
+  <h3 class="mb-4"><i class="fas fa-credit-card me-2"></i>Thanh toán đơn hàng</h3>
+
+  <div class="row g-4">
+    <!-- Form -->
+    <div class="col-md-7">
+      <div class="card">
+        <div class="card-header bg-white"><h5 class="mb-0">Thông tin khách hàng</h5></div>
+        <div class="card-body">
+          <form asp-action="Checkout" asp-controller="Orders" method="post" id="checkoutForm">
+            @Html.AntiForgeryToken()
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+              <div class="alert alert-danger">
+                <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Vui lòng kiểm tra lại:</h6>
+                <ul class="mb-0">
+                  @foreach (var key in ViewData.ModelState.Keys)
+                    foreach (var error in ViewData.ModelState[key].Errors)
+                      { <li>@error.ErrorMessage</li> }
+                </ul>
+              </div>
+            }
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Họ tên <span class="text-danger">*</span></label>
+                <input type="text" name="CustomerName" value="@Model.CustomerName" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                <input type="tel" name="Phone" value="@Model.Phone" class="form-control" pattern="[0-9]{10,11}" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" name="Email" value="@Model.Email" class="form-control" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
+                <textarea name="Address" class="form-control" rows="2" required>@Model.Address</textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Ghi chú</label>
+                <textarea name="Notes" class="form-control" rows="2">@Model.Notes</textarea>
+              </div>
+
+              <div class="col-12 mt-4">
+                <label class="form-label fw-bold fs-5 mb-3"><i class="fas fa-wallet me-2"></i>Hình thức thanh toán</label>
+                <div class="payment-methods">
+                  <div class="payment-option">
+                    <input class="form-check-input" type="radio" name="PaymentMethod" id="cod" value="Tiền mặt" @(Model.PaymentMethod=="Tiền mặt"?"checked":"") required>
+                    <label class="payment-label" for="cod">
+                      <div class="payment-icon cod-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                      <div class="payment-info"><div class="payment-name">Thanh toán khi nhận hàng (COD)</div><small class="text-muted">Trả tiền cho shipper</small></div>
+                      <div class="payment-badge"><span class="badge bg-success">Phổ biến</span></div>
+                    </label>
+                  </div>
+                  <div class="payment-option">
+                    <input class="form-check-input" type="radio" name="PaymentMethod" id="qr" value="Chuyển khoản" @(Model.PaymentMethod=="Chuyển khoản"?"checked":"")>
+                    <label class="payment-label" for="qr">
+                      <div class="payment-icon qr-icon"><i class="fas fa-qrcode"></i></div>
+                      <div class="payment-info"><div class="payment-name">Chuyển khoản QR (VietQR)</div><small class="text-muted">Quét QR thanh toán</small></div>
+                      <div class="payment-badge"><span class="badge bg-primary">Nhanh</span></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 btn-lg mt-3">
+              <i class="fas fa-check-circle me-2"></i>Xác nhận đặt hàng
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tóm tắt -->
+    <div class="col-md-5">
+      <div class="card mb-3">
+        <div class="card-header bg-white"><h5 class="mb-0">Đơn hàng của bạn</h5></div>
+        <div class="card-body">
+          @foreach(var p in products)
+          {
+            <div class="d-flex mb-3 pb-3 border-bottom">
+              <img src="@p.ImageUrl" style="width:60px;height:60px;object-fit:contain" class="me-3" />
+              <div class="flex-grow-1"><h6 class="mb-1">@p.Name</h6><small class="text-muted">Số lượng: 1</small></div>
+              <div class="text-end"><strong>@p.Price.ToString("N0")₫</strong></div>
+            </div>
+          }
+
+          <div class="border-top pt-3">
+            <div class="d-flex justify-content-between mb-2"><span>Tạm tính:</span><strong id="subtotal">@subtotal.ToString("N0")₫</strong></div>
+            <div class="d-flex justify-content-between mb-2"><span>Phí vận chuyển:</span><strong id="shipping">@(subtotal>=5_000_000?"Miễn phí":"150,000₫")</strong></div>
+
+            <!-- Hai dòng giảm giá riêng -->
+            <div class="d-flex justify-content-between mb-2 text-success" id="discountRowCoupon" style="display:none">
+              <span><i class="fas fa-ticket-alt me-1"></i>Mã giảm giá:</span>
+              <strong id="discountCoupon">0₫</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2 text-success" id="discountRowSeasonal" style="display:none">
+              <span><i class="fas fa-fire me-1"></i>Khuyến mãi theo mùa:</span>
+              <strong id="discountSeasonal">0₫</strong>
+            </div>
+
+            <div class="d-flex justify-content-between fs-5 border-top pt-3">
+              <strong>Tổng cộng:</strong>
+              <strong class="text-danger" id="total">@((subtotal>=5_000_000?subtotal:subtotal+150_000).ToString("N0"))₫</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coupon -->
+      <div class="card mb-3 coupon-card">
+        <div class="card-body p-0">
+          <div class="coupon-header" data-bs-toggle="collapse" data-bs-target="#couponList">
+            <div class="d-flex align-items-center">
+              <div class="coupon-icon"><i class="fas fa-ticket-alt"></i></div>
+              <div class="flex-grow-1">
+                <div class="fw-bold">Mã giảm giá</div>
+                <small class="text-muted" id="selectedCouponText">Chọn hoặc nhập mã</small>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+          <div class="collapse" id="couponList">
+            <div class="coupon-body">
+              <div class="coupon-input-section">
+                <div class="input-group">
+                  <input type="text" class="form-control" id="manualCouponInput" placeholder="Nhập mã giảm giá" />
+                  <button class="btn btn-primary" type="button" onclick="applyManualCoupon()">Áp dụng</button>
+                </div>
+              </div>
+              <div class="coupon-divider"><span>Hoặc chọn mã có sẵn</span></div>
+              <div class="available-coupons" id="availableCoupons"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seasonal -->
+      <div class="card mb-3 seasonal-card">
+        <div class="card-body p-0">
+          <div class="seasonal-header" data-bs-toggle="collapse" data-bs-target="#seasonalList">
+            <div class="d-flex align-items-center">
+              <div class="seasonal-icon"><i class="fas fa-percentage"></i></div>
+              <div class="flex-grow-1">
+                <div class="fw-bold">Khuyến mãi theo mùa</div>
+                <small class="text-muted" id="selectedSeasonalText">
+                  @if(seasonalPotential>0){<span class="text-success">Có thể giảm @seasonalPotential.ToString("N0")₫</span>}else{<text>Không có ưu đãi</text>}
+                </small>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+          <div class="collapse" id="seasonalList">
+            <div class="seasonal-body">
+              @if(seasonalPromos.Any()){
+                <div class="seasonal-promotions-list">
+                  @{
+                    var isWeekend = DateTime.Now.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+                  }
+                  @foreach(var promo in seasonalPromos){
+                    var applicableByWeekend = promo.Name.Contains("Cuối Tuần") ? isWeekend : true;
+                    <div class="seasonal-item @(applicableByWeekend?"":"disabled")" data-promo-id="@promo.Id" data-discount="@promo.DiscountPercent">
+                      <div class="seasonal-badge"><i class="fas fa-fire"></i></div>
+                      <div class="seasonal-content">
+                        <div class="seasonal-name">@promo.Name</div>
+                        <div class="seasonal-desc">@promo.Description</div>
+                        <div class="seasonal-value">Giảm @promo.DiscountPercent%</div>
+                        <div class="seasonal-expiry"><i class="fas fa-clock me-1"></i>HSD: @promo.EndDate.ToString("dd/MM/yyyy")</div>
+                      </div>
+                      @if(applicableByWeekend){<div class="seasonal-status"><span class="badge bg-success">Tự động áp dụng</span></div>}
+                    </div>
+                  }
+                </div>
+              } else {
+                <div class="text-center py-4 text-muted">Không có khuyến mãi theo mùa nào đang diễn ra</div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="couponMessage" class="mt-2"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS rút gọn cho demo -->
+<style>
+.payment-methods{display:flex;flex-direction:column;gap:12px}
+.payment-option{position:relative}
+.payment-option .form-check-input{position:absolute;opacity:0}
+.payment-label{display:flex;align-items:center;padding:16px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:.3s;background:#fff}
+.payment-label:hover{border-color:#28a745;background:#f8fff9}
+.payment-option .form-check-input:checked~.payment-label{border-color:#28a745;background:#f0fff4}
+.payment-icon{width:50px;height:50px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:16px;font-size:24px}
+.cod-icon{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.qr-icon{background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff}
+.coupon-card{border:2px dashed #ff6b35;overflow:hidden}
+.coupon-header{padding:16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer}
+.coupon-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px}
+.coupon-body{padding:16px;background:#f8f9fa}
+.available-coupons{display:flex;flex-direction:column;gap:12px;max-height:300px;overflow-y:auto}
+.coupon-item{border:2px solid #e0e0e0;border-radius:12px;padding:12px;background:#fff;position:relative}
+.coupon-select-btn{position:absolute;top:12px;right:12px;background:#667eea;color:#fff;border:none;padding:6px 16px;border-radius:20px;font-size:12px}
+.seasonal-card{border:2px dashed #28a745;overflow:hidden}
+.seasonal-header{padding:16px;background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;cursor:pointer}
+.seasonal-promotions-list{display:flex;flex-direction:column;gap:12px;max-height:400px;overflow-y:auto}
+.seasonal-item{border:2px solid #28a745;border-radius:12px;padding:12px;background:#fff;display:flex;align-items:center;gap:12px}
+.seasonal-item.disabled{opacity:.6;border-color:#ccc}
+.seasonal-badge{width:50px;height:50px;background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:12px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px}
+.seasonal-status{margin-left:auto}
+</style>
+
+<!-- JS -->
+<script>
+const subtotal = @subtotal;
+let shippingFee = subtotal >= 5000000 ? 0 : 150000;
+let couponDiscountAmount = 0;
+let seasonalDiscountAmount = @(seasonalPotential); // server tính trước
+
+// ===== Coupons =====
+async function loadCoupons() {
+  try {
+    const res = await fetch('/Coupons/GetAvailableCoupons?orderAmount=' + subtotal);
+    const coupons = await res.json();
+    const container = document.getElementById('availableCoupons');
+    container.innerHTML = '';
+
+    if (!coupons || coupons.length === 0) {
+      container.innerHTML = '<p class="text-muted text-center py-3">Không có mã giảm giá khả dụng</p>';
+      return;
+    }
+
+    coupons.forEach(c => {
+      const canUse = subtotal >= c.minOrderAmount;
+      const div = document.createElement('div');
+      div.className = 'coupon-item';
+      div.innerHTML = `
+        <div class="coupon-code fw-bold">${c.code}</div>
+        <div class="coupon-desc">${c.description ?? ''}</div>
+        <div class="coupon-value">Giảm ${c.discountPercent>0? c.discountPercent+'%': (c.discountAmount??0).toLocaleString()+'₫'}</div>
+        ${canUse ? `<button type="button" class="coupon-select-btn" onclick="selectCoupon('${c.code}')">Chọn</button>`:''}
+      `;
+      container.appendChild(div);
+    });
+  } catch {}
+}
+function selectCoupon(code){ document.getElementById('manualCouponInput').value = code; applyManualCoupon(); }
+function applyManualCoupon(){
+  const code = (document.getElementById('manualCouponInput').value||'').trim().toUpperCase();
+  if(!code){ showMessage('Vui lòng nhập mã giảm giá','warning'); return; }
+  applyCoupon(code);
+}
+function applyCoupon(code){
+  fetch('/Coupons/Validate', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ code: code, orderAmount: subtotal })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.valid){
+      couponDiscountAmount = d.discount || 0;
+      document.getElementById('selectedCouponText').textContent = `${code} (-${couponDiscountAmount.toLocaleString()}₫)`;
+      // hidden field để post lên server
+      let h = document.getElementById('couponCodeInput');
+      if(!h){ h=document.createElement('input'); h.type='hidden'; h.name='couponCode'; h.id='couponCodeInput'; document.getElementById('checkoutForm').appendChild(h); }
+      h.value = code;
+      updateTotal();
+      showMessage(`✓ Đã áp dụng mã ${code} - Giảm ${d.discount.toLocaleString()}₫`,'success');
+    } else {
+      showMessage(d.message || 'Mã không hợp lệ','danger');
+    }
+  })
+  .catch(()=>showMessage('Lỗi khi kiểm tra mã giảm giá','danger'));
+}
+
+// ===== Tính tiền: CỘNG DỒN =====
+function updateTotal(){
+  const totalDiscount = (couponDiscountAmount||0) + (seasonalDiscountAmount||0);
+  const total = subtotal + shippingFee - totalDiscount;
+  document.getElementById('total').textContent = total.toLocaleString('vi-VN') + '₫';
+
+  // coupon row
+  const rowC = document.getElementById('discountRowCoupon');
+  if (couponDiscountAmount > 0){
+    rowC.style.display = 'flex';
+    document.getElementById('discountCoupon').textContent = '-' + couponDiscountAmount.toLocaleString('vi-VN') + '₫';
+  } else rowC.style.display = 'none';
+
+  // seasonal row
+  const rowS = document.getElementById('discountRowSeasonal');
+  if (seasonalDiscountAmount > 0){
+    rowS.style.display = 'flex';
+    document.getElementById('discountSeasonal').textContent = '-' + seasonalDiscountAmount.toLocaleString('vi-VN') + '₫';
+    document.getElementById('selectedSeasonalText').innerHTML =
+      '<span class="text-success"><i class="fas fa-check-circle me-1"></i>Đang áp dụng - Giảm ' +
+      seasonalDiscountAmount.toLocaleString('vi-VN') + '₫</span>';
+  } else rowS.style.display = 'none';
+}
+
+function showMessage(text,type){
+  const box = document.getElementById('couponMessage');
+  box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
+    <i class="fas fa-${type==='success'?'check-circle':'exclamation-triangle'} me-2"></i>${text}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>`;
+  setTimeout(()=>{ box.innerHTML=''; }, 5000);
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadCoupons();
+  updateTotal();
+});
+</script>

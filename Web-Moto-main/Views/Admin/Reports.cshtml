@@ -1,0 +1,383 @@
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Báo cáo doanh thu"; }
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-chart-bar me-2"></i>Báo cáo doanh thu</h3>
+    <a href="/Admin" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Về Dashboard
+    </a>
+  </div>
+
+  <!-- Filter -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Năm</label>
+          <select name="year" class="form-select">
+            @for(int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
+            {
+              <option value="@y" @(ViewBag.Year == y ? "selected" : "")>@y</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tháng</label>
+          <select name="month" class="form-select">
+            @for(int m = 1; m <= 12; m++)
+            {
+              <option value="@m" @(ViewBag.Month == m ? "selected" : "")>Tháng @m</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-search me-2"></i>Xem báo cáo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  @{
+    var hasMonthlyData = ViewBag.MonthlyRevenue != null && ((IEnumerable<dynamic>)ViewBag.MonthlyRevenue).Any();
+    var hasCustomerData = ViewBag.TopCustomers != null && ((IEnumerable<dynamic>)ViewBag.TopCustomers).Any();
+  }
+
+  @if(!hasMonthlyData && !hasCustomerData)
+  {
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center py-5">
+            <div class="mb-4">
+              <i class="fas fa-chart-line fa-5x text-muted opacity-25"></i>
+            </div>
+            <h4 class="text-muted mb-3">Chưa có dữ liệu doanh thu</h4>
+            <p class="text-muted mb-4">
+              Báo cáo doanh thu sẽ tự động hiển thị khi có khách hàng đặt hàng.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+              <a href="/Admin/Orders" class="btn btn-primary">
+                <i class="fas fa-shopping-bag me-2"></i>Xem đơn hàng
+              </a>
+              <a href="/Admin" class="btn btn-outline-secondary">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+  else
+  {
+    <!-- Stats Summary -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="flex-shrink-0">
+                <div class="bg-primary bg-opacity-10 p-3 rounded">
+                  <i class="fas fa-dollar-sign fa-2x text-primary"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <h6 class="text-muted mb-1">Tổng doanh thu năm @ViewBag.Year</h6>
+                <h4 class="mb-0">
+                  @{
+                    var totalRevenue = hasMonthlyData 
+                      ? ((IEnumerable<dynamic>)ViewBag.MonthlyRevenue).Sum(x => (decimal)x.revenue)
+                      : 0;
+                  }
+                  @string.Format("{0:N0}₫", totalRevenue)
+                </h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="flex-shrink-0">
+                <div class="bg-success bg-opacity-10 p-3 rounded">
+                  <i class="fas fa-shopping-cart fa-2x text-success"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <h6 class="text-muted mb-1">Tổng đơn hàng</h6>
+                <h4 class="mb-0">
+                  @{
+                    var totalOrders = hasMonthlyData 
+                      ? ((IEnumerable<dynamic>)ViewBag.MonthlyRevenue).Sum(x => (int)x.orderCount)
+                      : 0;
+                  }
+                  @totalOrders đơn
+                </h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="flex-shrink-0">
+                <div class="bg-info bg-opacity-10 p-3 rounded">
+                  <i class="fas fa-chart-line fa-2x text-info"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <h6 class="text-muted mb-1">Giá trị TB/đơn</h6>
+                <h4 class="mb-0">
+                  @{
+                    var avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+                  }
+                  @string.Format("{0:N0}₫", avgOrder)
+                </h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ BIỂU ĐỒ DOANH THU THEO THÁNG -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="fas fa-chart-bar me-2"></i>Biểu đồ doanh thu theo tháng - Năm @ViewBag.Year
+            </h5>
+          </div>
+          <div class="card-body">
+            @if(hasMonthlyData)
+            {
+              <canvas id="revenueChart" height="80"></canvas>
+            }
+            else
+            {
+              <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle me-2"></i>Chưa có dữ liệu doanh thu trong năm @ViewBag.Year
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bảng doanh thu theo tháng -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Chi tiết doanh thu theo tháng</h5>
+          </div>
+          <div class="card-body">
+            @if(hasMonthlyData)
+            {
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th width="15%">Tháng</th>
+                      <th class="text-center" width="15%">Số đơn hàng</th>
+                      <th class="text-end" width="25%">Doanh thu</th>
+                      <th class="text-end" width="25%">Giá trị TB/đơn</th>
+                      <th width="20%">Tỷ lệ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @{
+                      var monthlyList = (IEnumerable<dynamic>)ViewBag.MonthlyRevenue;
+                      var maxRevenue = monthlyList.Max(x => (decimal)x.revenue);
+                    }
+                    @foreach(dynamic item in monthlyList)
+                    {
+                      var revenue = (decimal)item.revenue;
+                      var orderCount = (int)item.orderCount;
+                      var avgValue = orderCount > 0 ? revenue / orderCount : 0;
+                      var percentage = maxRevenue > 0 ? (revenue / maxRevenue * 100) : 0;
+                      
+                      <tr>
+                        <td><strong>Tháng @item.month</strong></td>
+                        <td class="text-center">
+                          <span class="badge bg-primary rounded-pill">@orderCount</span>
+                        </td>
+                        <td class="text-end">
+                          <strong class="text-success">@string.Format("{0:N0}₫", revenue)</strong>
+                        </td>
+                        <td class="text-end">
+                          <span class="text-muted">@string.Format("{0:N0}₫", avgValue)</span>
+                        </td>
+                        <td>
+                          <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: @percentage.ToString("F1")%" 
+                                 aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100">
+                              @percentage.ToString("F0")%
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot class="table-light">
+                    <tr>
+                      <th>Tổng cộng</th>
+                      <th class="text-center">
+                        <span class="badge bg-dark rounded-pill">@totalOrders</span>
+                      </th>
+                      <th class="text-end">
+                        <strong class="text-primary fs-5">@string.Format("{0:N0}₫", totalRevenue)</strong>
+                      </th>
+                      <th class="text-end">
+                        <strong class="text-info">@string.Format("{0:N0}₫", avgOrder)</strong>
+                      </th>
+                      <th></th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="row g-4">
+      <div class="col-md-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Top 10 khách hàng</h5>
+          </div>
+          <div class="card-body">
+            @if(hasCustomerData)
+            {
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th width="5%">#</th>
+                      <th>Khách hàng</th>
+                      <th>Email</th>
+                      <th class="text-center" width="12%">Số đơn</th>
+                      <th class="text-end" width="20%">Tổng chi tiêu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @{int rank = 1;}
+                    @foreach(dynamic item in ViewBag.TopCustomers)
+                    {
+                      <tr>
+                        <td>
+                          @if(rank == 1) { <span class="badge bg-warning text-dark"><i class="fas fa-trophy"></i> @rank</span> }
+                          else if(rank == 2) { <span class="badge bg-secondary"><i class="fas fa-medal"></i> @rank</span> }
+                          else if(rank == 3) { <span class="badge bg-info"><i class="fas fa-award"></i> @rank</span> }
+                          else { <strong>@rank</strong> }
+                        </td>
+                        <td><strong>@item.Customer.FullName</strong></td>
+                        <td>@item.Customer.Email</td>
+                        <td class="text-center"><span class="badge bg-primary rounded-pill">@item.OrderCount</span></td>
+                        <td class="text-end"><strong class="text-success fs-5">@string.Format("{0:N0}₫", (decimal)item.TotalSpent)</strong></td>
+                      </tr>
+                      rank++;
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+@if(hasMonthlyData)
+{
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    const monthlyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+      ((IEnumerable<dynamic>)ViewBag.MonthlyRevenue).Select(x => new {
+        month = (int)x.month,
+        revenue = (decimal)x.revenue,
+        orderCount = (int)x.orderCount
+      })
+    ));
+
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: monthlyData.map(d => `Tháng ${d.month}`),
+        datasets: [{
+          label: 'Doanh thu (₫)',
+          data: monthlyData.map(d => d.revenue),
+          backgroundColor: 'rgba(40, 167, 69, 0.8)',
+          borderColor: 'rgba(40, 167, 69, 1)',
+          borderWidth: 2
+        }, {
+          label: 'Số đơn hàng',
+          data: monthlyData.map(d => d.orderCount * 1000000), // Scale để hiển thị cùng trục
+          type: 'line',
+          backgroundColor: 'rgba(255, 193, 7, 0.2)',
+          borderColor: 'rgba(255, 193, 7, 1)',
+          borderWidth: 2,
+          yAxisID: 'y1'
+        }]
+      },
+      options: {
+        responsive: true,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            ticks: {
+              callback: function(value) {
+                return new Intl.NumberFormat('vi-VN').format(value) + '₫';
+              }
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            ticks: {
+              callback: function(value) {
+                return (value / 1000000).toFixed(0) + ' đơn';
+              }
+            },
+            grid: {
+              drawOnChartArea: false
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                if (context.dataset.label === 'Doanh thu (₫)') {
+                  return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(context.parsed.y) + '₫';
+                } else {
+                  return 'Số đơn: ' + (context.parsed.y / 1000000).toFixed(0) + ' đơn';
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+}

@@ -1,0 +1,5 @@
+@model MotoBikeStore.Models.Product
+@{ Layout="~/Views/Shared/_Layout.cshtml"; }
+<h3>Xóa sản phẩm</h3>
+<p>Bạn chắc muốn xóa <strong>@Model.Name</strong>?</p>
+<form method="post"><button class="btn btn-danger">Xóa</button> <a class="btn btn-secondary" href="/Products">Hủy</a></form>

@@ -1,0 +1,165 @@
+@model MotoBikeStore.Models.Product
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]=Model.Name; }
+
+<div class="container py-5">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item">@(Model.Category?.Name ?? "Sản phẩm")</li>
+      <li class="breadcrumb-item active">@Model.Name</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4 mb-5">
+    <!-- Product Image -->
+    <div class="col-md-5">
+      <div class="card">
+        <div class="card-body p-4 text-center" style="background:#f8f9fa">
+          @if (Model.DiscountPercent.HasValue) {
+            <span class="product-badge position-absolute">-@Model.DiscountPercent%</span>
+          }
+          <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid" style="max-height:400px" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Info -->
+    <div class="col-md-7">
+      <h2 class="mb-3">@Model.Name</h2>
+      
+      <div class="d-flex align-items-center mb-3">
+        <div class="me-3">
+          <i class="fas fa-star text-warning"></i>
+          <strong>@Model.Rating.ToString("0.0")</strong>/5
+        </div>
+        <div class="me-3">
+          <span class="badge bg-primary">@Model.Brand</span>
+        </div>
+        @if(Model.Category != null)
+        {
+          <div>
+            <span class="badge bg-secondary">@Model.Category.Name</span>
+          </div>
+        }
+      </div>
+
+      <!-- Price -->
+      <div class="mb-4">
+        <h3 class="text-danger mb-2">@Model.Price.ToString("N0")₫</h3>
+        @if(Model.OldPrice.HasValue)
+        {
+          <p class="text-muted">
+            <del>@Model.OldPrice.Value.ToString("N0")₫</del>
+            <span class="text-success ms-2">Tiết kiệm: @((Model.OldPrice.Value - Model.Price).ToString("N0"))₫</span>
+          </p>
+        }
+      </div>
+
+      <!-- Specifications -->
+      <div class="card mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Thông số kỹ thuật</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless mb-0">
+            <tr>
+              <td width="150"><strong>Động cơ:</strong></td>
+              <td>@Model.Engine</td>
+            </tr>
+            <tr>
+              <td><strong>Bình nhiên liệu:</strong></td>
+              <td>@Model.Fuel</td>
+            </tr>
+            @if(!string.IsNullOrEmpty(Model.Color))
+            {
+              <tr>
+                <td><strong>Màu sắc:</strong></td>
+                <td>@Model.Color</td>
+              </tr>
+            }
+            @if(!string.IsNullOrEmpty(Model.Warranty))
+            {
+              <tr>
+                <td><strong>Bảo hành:</strong></td>
+                <td>@Model.Warranty</td>
+              </tr>
+            }
+            @if(Model.Stock.HasValue)
+            {
+              <tr>
+                <td><strong>Tình trạng:</strong></td>
+                <td>
+                  @if(Model.Stock > 0)
+                  {
+                    <span class="badge bg-success">Còn hàng (@Model.Stock sản phẩm)</span>
+                  }
+                  else
+                  {
+                    <span class="badge bg-danger">Hết hàng</span>
+                  }
+                </td>
+              </tr>
+            }
+          </table>
+        </div>
+      </div>
+
+      <!-- Description -->
+      @if(!string.IsNullOrEmpty(Model.Description))
+      {
+        <div class="mb-4">
+          <h5>Mô tả sản phẩm</h5>
+          <p>@Model.Description</p>
+        </div>
+      }
+
+      <!-- Actions -->
+      <div class="d-flex gap-2 mb-3">
+        <a href="/Cart/Add/@Model.Id" class="btn btn-success btn-lg flex-fill">
+          <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ hàng
+        </a>
+        <a href="/Compare/Add/@Model.Id" class="btn btn-outline-info btn-lg">
+          <i class="fas fa-balance-scale"></i>
+        </a>
+      </div>
+
+      <!-- Features -->
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Ưu đãi:</strong> Miễn phí vận chuyển cho đơn hàng trên 5 triệu đồng
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  @if(ViewBag.RelatedProducts != null && ((List<MotoBikeStore.Models.Product>)ViewBag.RelatedProducts).Any())
+  {
+    <div class="mb-5">
+      <h4 class="mb-4">Sản phẩm liên quan</h4>
+      <div class="row g-3">
+        @foreach(var p in (List<MotoBikeStore.Models.Product>)ViewBag.RelatedProducts)
+        {
+          <div class="col-md-3">
+            <div class="card product-card h-100">
+              <div class="product-image">
+                <a href="/Home/Detail/@p.Id">
+                  <img src="@p.ImageUrl" alt="@p.Name" />
+                </a>
+              </div>
+              <div class="product-info">
+                <h6 class="product-title">
+                  <a href="/Home/Detail/@p.Id" class="text-decoration-none text-dark">@p.Name</a>
+                </h6>
+                <div class="product-price">@p.Price.ToString("N0")₫</div>
+                <a href="/Cart/Add/@p.Id" class="btn btn-success btn-sm w-100 mt-2">
+                  <i class="fas fa-cart-plus"></i> Thêm giỏ
+                </a>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

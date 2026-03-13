@@ -1,0 +1,113 @@
+@model IEnumerable<MotoBikeStore.Services.SeasonalPromotion>
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Khuyến mãi theo mùa"; }
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-calendar-alt me-2"></i>Chương trình khuyến mãi theo mùa</h3>
+    <div>
+      <a href="/SeasonalPromotions/Create" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Tạo chương trình
+      </a>
+      <a href="/Admin" class="btn btn-outline-secondary ms-2">
+        <i class="fas fa-arrow-left me-2"></i>Về Dashboard
+      </a>
+    </div>
+  </div>
+
+  @if(TempData["SuccessMessage"] != null)
+  {
+    <div class="alert alert-success alert-dismissible">
+      @TempData["SuccessMessage"]
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  }
+
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Tên chương trình</th>
+            <th>Mô tả</th>
+            <th>Giảm giá</th>
+            <th>Áp dụng cho</th>
+            <th>Thời gian</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach(var promo in Model)
+          {
+            var isActive = promo.IsActive && promo.StartDate <= DateTime.UtcNow && promo.EndDate >= DateTime.UtcNow;
+            var isExpired = promo.EndDate < DateTime.UtcNow;
+            var isUpcoming = promo.StartDate > DateTime.UtcNow;
+            
+            <tr class="@(isExpired ? "table-secondary" : "")">
+              <td><strong>@promo.Name</strong></td>
+              <td>@promo.Description</td>
+              <td><span class="badge bg-success fs-6">@promo.DiscountPercent%</span></td>
+              <td>
+                @if(promo.ApplyTo == "All")
+                {
+                  <span class="badge bg-primary">Tất cả sản phẩm</span>
+                }
+                else if(promo.ApplyTo == "Category")
+                {
+                  var cat = MotoBikeStore.Services.InMemoryDataStore.Categories.FirstOrDefault(c => c.Id == promo.CategoryId);
+                  <span class="badge bg-info">@(cat?.Name ?? "Category")</span>
+                }
+                else if(promo.ApplyTo == "Brand")
+                {
+                  <span class="badge bg-warning text-dark">@promo.Brand</span>
+                }
+              </td>
+              <td>
+                <small>
+                  @promo.StartDate.ToString("dd/MM/yyyy")<br>
+                  đến @promo.EndDate.ToString("dd/MM/yyyy")
+                </small>
+              </td>
+              <td>
+                @if(isExpired)
+                {
+                  <span class="badge bg-secondary">Đã hết hạn</span>
+                }
+                else if(isUpcoming)
+                {
+                  <span class="badge bg-warning">Sắp diễn ra</span>
+                }
+                else if(isActive)
+                {
+                  <span class="badge bg-success">Đang diễn ra</span>
+                }
+                else
+                {
+                  <span class="badge bg-danger">Đã tắt</span>
+                }
+              </td>
+              <td class="text-center">
+                <a href="/SeasonalPromotions/Toggle/@promo.Id" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-@(promo.IsActive ? "toggle-on" : "toggle-off")"></i>
+                </a>
+                <a href="/SeasonalPromotions/Delete/@promo.Id" class="btn btn-sm btn-danger" 
+                   onclick="return confirm('Xác nhận xóa chương trình này?')">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="alert alert-info mt-4">
+    <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Lưu ý:</h6>
+    <ul class="mb-0">
+      <li>Chương trình <strong>"Flash Sale Cuối Tuần"</strong> chỉ áp dụng vào Thứ 7 & Chủ Nhật</li>
+      <li>Nếu nhiều chương trình cùng áp dụng cho 1 sản phẩm → Tự động chọn mức giảm cao nhất</li>
+      <li>Giảm giá theo mùa <strong>KHÔNG</strong> cộng dồn với mã coupon (chọn cái nào lợi hơn)</li>
+    </ul>
+  </div>
+</div>

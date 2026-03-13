@@ -1,0 +1,111 @@
+  @model MotoBikeStore.Models.Order
+  @{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Đặt hàng thành công"; }
+
+  <div class="container py-5">
+    <div class="text-center mb-5">
+      <div class="success-icon mb-3">
+        <i class="fas fa-check-circle text-success" style="font-size:5rem"></i>
+      </div>
+      <h2 class="text-success mb-3">Đặt hàng thành công!</h2>
+      <p class="lead">Cảm ơn bạn đã mua hàng tại MotoBike Store</p>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Thông tin đơn hàng</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Mã đơn hàng:</strong> <span class="text-primary">#@Model.Id</span></p>
+                <p><strong>Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><strong>Trạng thái:</strong> 
+                  <span class="badge bg-warning">Chờ xác nhận</span>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Khách hàng:</strong> @Model.CustomerName</p>
+                <p><strong>Số điện thoại:</strong> @Model.Phone</p>
+                <p><strong>Địa chỉ:</strong> @Model.Address</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Chi tiết đơn hàng</h5>
+          </div>
+          <div class="card-body">
+            <table class="table mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Sản phẩm</th>
+                  <th class="text-center">SL</th>
+                  <th class="text-end">Đơn giá</th>
+                  <th class="text-end">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach(var item in Model.Details)
+                {
+                  <tr>
+                    <td>
+                      <img src="@item.Product.ImageUrl" style="width:40px" class="me-2" />
+                      @item.Product.Name
+                    </td>
+                    <td class="text-center">@item.Quantity</td>
+                    <td class="text-end">@item.UnitPrice.ToString("N0")₫</td>
+                    <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("N0"))₫</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="3" class="text-end"><strong>Tạm tính:</strong></td>
+                  <td class="text-end">@Model.Subtotal.ToString("N0")₫</td>
+                </tr>
+                <tr>
+                  <td colspan="3" class="text-end"><strong>Phí vận chuyển:</strong></td>
+                  <td class="text-end">@Model.ShippingFee.ToString("N0")₫</td>
+                </tr>
+                @if(Model.DiscountAmount > 0)
+                {
+                  <tr class="text-success">
+                    <td colspan="3" class="text-end">
+                      <strong>Giảm giá:</strong>
+                      @if(Model.Coupon != null)
+                      {
+                        <span class="badge bg-success">@Model.Coupon.Code</span>
+                      }
+                    </td>
+                    <td class="text-end">-@Model.DiscountAmount.ToString("N0")₫</td>
+                  </tr>
+                }
+                <tr>
+                  <td colspan="3" class="text-end"><h5 class="mb-0">Tổng cộng:</h5></td>
+                  <td class="text-end"><h5 class="mb-0 text-danger">@Model.Total.ToString("N0")₫</h5></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Lưu ý:</strong> Đơn hàng của bạn đang được xử lý. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.
+        </div>
+
+        <div class="text-center">
+          <a href="/Orders/Track?id=@Model.Id" class="btn btn-primary me-2">
+            <i class="fas fa-truck me-2"></i>Theo dõi đơn hàng
+          </a>
+          <a href="/" class="btn btn-outline-primary">
+            <i class="fas fa-home me-2"></i>Về trang chủ
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>

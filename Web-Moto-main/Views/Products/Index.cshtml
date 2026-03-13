@@ -1,0 +1,21 @@
+@model IEnumerable<MotoBikeStore.Models.Product>
+@{ ViewData["Title"]="Sản phẩm"; Layout="~/Views/Shared/_Layout.cshtml"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Quản lý sản phẩm</h3>
+  <a class="btn btn-primary" href="/Products/Create">Thêm sản phẩm</a>
+</div>
+<table class="table table-striped">
+  <thead><tr><th>Ảnh</th><th>Tên</th><th>Hãng</th><th>Giá</th><th></th></tr></thead>
+  <tbody>
+  @foreach (var p in Model) {
+    <tr>
+      <td><img src="@p.ImageUrl" style="height:50px"></td>
+      <td>@p.Name</td><td>@p.Brand</td><td>@p.Price.ToString("N0") ₫</td>
+      <td>
+        <a class="btn btn-sm btn-warning" href="/Products/Edit/@p.Id">Sửa</a>
+        <a class="btn btn-sm btn-danger" href="/Products/Delete/@p.Id">Xóa</a>
+      </td>
+    </tr>
+  }
+  </tbody>
+</table>

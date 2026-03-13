@@ -1,0 +1,114 @@
+@model IEnumerable<MotoBikeStore.Models.Order>
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Quản lý đơn hàng"; }
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-shopping-cart me-2"></i>Quản lý đơn hàng</h3>
+    <a href="/Admin" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Về Dashboard
+    </a>
+  </div>
+
+  <!-- Status Filter Tabs -->
+  <ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+      <a class="nav-link @(ViewBag.SelectedStatus == null ? "active" : "")" href="/Admin/Orders">
+        Tất cả (@Model.Count())
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link @(ViewBag.SelectedStatus == "Pending" ? "active" : "")" href="/Admin/Orders?status=Pending">
+        Chờ xác nhận (@Model.Count(o => o.Status == "Pending"))
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link @(ViewBag.SelectedStatus == "Confirmed" ? "active" : "")" href="/Admin/Orders?status=Confirmed">
+        Đã xác nhận (@Model.Count(o => o.Status == "Confirmed"))
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link @(ViewBag.SelectedStatus == "Shipping" ? "active" : "")" href="/Admin/Orders?status=Shipping">
+        Đang giao (@Model.Count(o => o.Status == "Shipping"))
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link @(ViewBag.SelectedStatus == "Delivered" ? "active" : "")" href="/Admin/Orders?status=Delivered">
+        Đã giao (@Model.Count(o => o.Status == "Delivered"))
+      </a>
+    </li>
+  </ul>
+
+  <!-- Orders Table -->
+  @if(!Model.Any())
+  {
+    <div class="alert alert-info">Không có đơn hàng nào</div>
+  }
+  else
+  {
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Mã ĐH</th>
+                <th>Ngày đặt</th>
+                <th>Khách hàng</th>
+                <th>Số ĐT</th>
+                <th class="text-end">Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th class="text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach(var order in Model)
+              {
+                <tr>
+                  <td><strong>#@order.Id</strong></td>
+                  <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                  <td>
+                    @order.CustomerName
+                    @if(order.User != null)
+                    {
+                      <br><small class="text-muted">@order.User.Email</small>
+                    }
+                  </td>
+                  <td>@order.Phone</td>
+                  <td class="text-end">
+                    <strong class="text-danger">@order.Total.ToString("N0")₫</strong>
+                  </td>
+                  <td>
+                    <span class="badge bg-@(order.Status switch {
+                      "Pending" => "warning",
+                      "Confirmed" => "info",
+                      "Processing" => "primary",
+                      "Shipping" => "primary",
+                      "Delivered" => "success",
+                      "Cancelled" => "danger",
+                      _ => "secondary"
+                    })">
+                      @(order.Status switch {
+                        "Pending" => "Chờ xác nhận",
+                        "Confirmed" => "Đã xác nhận",
+                        "Processing" => "Đang xử lý",
+                        "Shipping" => "Đang giao",
+                        "Delivered" => "Đã giao",
+                        "Cancelled" => "Đã hủy",
+                        _ => order.Status
+                      })
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <a href="/Admin/OrderDetail/@order.Id" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-eye"></i> Chi tiết
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+</div>

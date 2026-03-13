@@ -1,0 +1,80 @@
+@model MotoBikeStore.Models.Coupon
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Tạo mã giảm giá"; }
+
+<div class="container py-4">
+  <h3 class="mb-4"><i class="fas fa-plus me-2"></i>Tạo mã giảm giá mới</h3>
+  
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+         <form method="post" action="/Coupons/CreatePost">
+            @Html.AntiForgeryToken()
+            
+            @if(TempData["ErrorMessage"] != null)
+            {
+              <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+            }
+            
+            @if (!ViewData.ModelState.IsValid)
+            {
+              <div class="alert alert-danger">
+                <ul class="mb-0">
+                  @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                  {
+                    <li>@error.ErrorMessage</li>
+                  }
+                </ul>
+              </div>
+            }
+            
+            <!-- Tên mã giảm giá -->
+            <div class="mb-4">
+              <label class="form-label">Tên mã giảm giá <span class="text-danger">*</span></label>
+              <input type="text" name="Code" class="form-control form-control-lg text-uppercase" 
+                     placeholder="VD: SUMMER2024" required />
+              <small class="text-muted">Chữ in hoa, không dấu, không khoảng trắng</small>
+            </div>
+            
+            <!-- Giảm bao nhiêu % -->
+            <div class="mb-4">
+              <label class="form-label">Giảm giá (%) <span class="text-danger">*</span></label>
+              <div class="input-group input-group-lg">
+                <input type="number" name="DiscountPercent" class="form-control" 
+                       min="1" max="100" value="10" required />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="text-muted">Từ 1% đến 100%</small>
+            </div>
+            
+            <!-- Hạn sử dụng -->
+            <div class="mb-4">
+              <label class="form-label">Hạn sử dụng <span class="text-danger">*</span></label>
+              <input type="date" name="EndDate" class="form-control form-control-lg" 
+                     min="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+              <small class="text-muted">Ngày hết hiệu lực của mã</small>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-save me-2"></i>Tạo mã giảm giá
+              </button>
+              <a href="/Coupons" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Hướng dẫn -->
+      <div class="alert alert-info mt-3">
+        <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Lưu ý:</h6>
+        <ul class="mb-0">
+          <li>Mã giảm giá sẽ được áp dụng cho tất cả đơn hàng</li>
+          <li>Không giới hạn số lần sử dụng</li>
+          <li>Có hiệu lực ngay khi tạo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

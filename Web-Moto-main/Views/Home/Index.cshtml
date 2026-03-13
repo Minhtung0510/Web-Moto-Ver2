@@ -1,0 +1,191 @@
+@model IEnumerable<MotoBikeStore.Models.Product>
+@{ ViewData["Title"]="Trang chủ"; Layout="~/Views/Shared/_Layout.cshtml"; }
+
+<!-- Hero -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 hero-content">
+        <h1>Xe Máy Chính Hãng</h1>
+        <p>Giá tốt nhất thị trường · Uy tín hàng đầu<br>Giao hàng toàn quốc · Bảo hành chính hãng</p>
+        <a href="#products" class="btn btn-hero"><i class="fas fa-shopping-bag me-2"></i>Mua ngay</a>
+        <a href="/Compare" class="btn btn-outline-light btn-ghost ms-2">So sánh sản phẩm</a>
+      </div>
+      <div class="col-lg-6 text-center">
+        <i class="fas fa-motorcycle hero-icon"></i>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Brands -->
+<section class="brands-section">
+  <div class="container">
+    <h3 class="text-center fw-bold mb-3">Thương Hiệu Nổi Bật</h3>
+    <p class="text-center text-muted mb-4">Đại lý chính thức các hãng xe hàng đầu</p>
+    <div class="row g-3 g-md-4">
+      @foreach(var brand in ViewBag.Brands ?? new List<string>())
+      {
+        <div class="col-6 col-md-3">
+          <a href="/?brand=@brand" class="text-decoration-none">
+            <div class="brand-logo">
+              <i class="fas fa-motorcycle brand-@brand.ToLower()"></i>
+              <h6 class="mt-2">@brand</h6>
+            </div>
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Filters & Products -->
+<section class="py-5" id="products">
+  <div class="container">
+    <div class="section-title">
+      <h3 class="fw-bold">Sản Phẩm</h3>
+      <p class="text-muted">@Model.Count() sản phẩm</p>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form method="get" action="/" class="row g-3">
+          <!-- Category Filter -->
+          <div class="col-md-3">
+            <label class="form-label">Danh mục</label>
+            <select name="categoryId" class="form-select">
+              <option value="">Tất cả</option>
+              @foreach(var cat in ViewBag.Categories ?? new List<MotoBikeStore.Models.Category>())
+              {
+                <option value="@cat.Id" @(ViewBag.SelectedCategory == cat.Id ? "selected" : "")>
+                  @cat.Name
+                </option>
+              }
+            </select>
+          </div>
+          
+          <!-- Brand Filter -->
+          <div class="col-md-3">
+            <label class="form-label">Thương hiệu</label>
+            <select name="brand" class="form-select">
+              <option value="">Tất cả</option>
+              @foreach(var brand in ViewBag.Brands ?? new List<string>())
+              {
+                <option value="@brand" @(ViewBag.SelectedBrand == brand ? "selected" : "")>
+                  @brand
+                </option>
+              }
+            </select>
+          </div>
+          
+          <!-- Price Range -->
+          <div class="col-md-2">
+            <label class="form-label">Giá từ</label>
+            <input type="number" name="minPrice" class="form-control" placeholder="0" 
+                   value="@ViewBag.MinPrice" step="1000000">
+          </div>
+          
+          <div class="col-md-2">
+            <label class="form-label">Đến</label>
+            <input type="number" name="maxPrice" class="form-control" placeholder="100M" 
+                   value="@ViewBag.MaxPrice" step="1000000">
+          </div>
+          
+          <!-- Sort -->
+          <div class="col-md-2">
+            <label class="form-label">Sắp xếp</label>
+            <select name="sortBy" class="form-select">
+              <option value="">Mặc định</option>
+              <option value="price_asc" @(ViewBag.SortBy == "price_asc" ? "selected" : "")>Giá tăng dần</option>
+              <option value="price_desc" @(ViewBag.SortBy == "price_desc" ? "selected" : "")>Giá giảm dần</option>
+              <option value="name" @(ViewBag.SortBy == "name" ? "selected" : "")>Tên A-Z</option>
+              <option value="rating" @(ViewBag.SortBy == "rating" ? "selected" : "")>Đánh giá cao</option>
+            </select>
+          </div>
+          
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-filter me-2"></i>Lọc
+            </button>
+            <a href="/" class="btn btn-outline-secondary ms-2">
+              <i class="fas fa-redo me-2"></i>Đặt lại
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    @if(!Model.Any())
+    {
+      <div class="text-center py-5">
+        <i class="fas fa-search" style="font-size:5rem;opacity:0.2"></i>
+        <h5 class="mt-3">Không tìm thấy sản phẩm</h5>
+        <p class="text-muted">Vui lòng thử lại với bộ lọc khác</p>
+      </div>
+    }
+    else
+    {
+      <div class="row g-4">
+        @foreach (var p in Model) {
+          <div class="col-md-6 col-lg-3">
+            <div class="card product-card h-100">
+              <div class="product-image">
+                @if (p.DiscountPercent.HasValue) {
+                  <span class="product-badge">-@p.DiscountPercent%</span>
+                } else if (!string.IsNullOrEmpty(p.Badge) && p.Badge.ToLower()=="new") {
+                  <span class="product-badge new">Mới</span>
+                } else if (!string.IsNullOrEmpty(p.Badge) && p.Badge.ToLower()=="hot") {
+                  <span class="product-badge">Hot</span>
+                }
+                <a href="/Home/Detail/@p.Id">
+                  <img src="@p.ImageUrl" alt="@p.Name" />
+                </a>
+              </div>
+              <div class="product-info d-flex flex-column">
+                <h6 class="product-title">
+                  <a href="/Home/Detail/@p.Id" class="text-decoration-none text-dark">@p.Name</a>
+                </h6>
+                <div class="product-price">
+                  @p.Price.ToString("N0")₫
+                  @if (p.OldPrice.HasValue) { <small>@p.OldPrice.Value.ToString("N0")₫</small> }
+                </div>
+                <div class="product-specs">
+                  <div class="spec-item"><i class="fas fa-tachometer-alt"></i><span>@p.Engine</span></div>
+                  <div class="spec-item"><i class="fas fa-gas-pump"></i><span>@p.Fuel</span></div>
+                  <div class="spec-item"><i class="fas fa-star"></i><span>@p.Rating.ToString("0.0")/5</span></div>
+                </div>
+                <div class="mt-auto">
+                  <div class="btn-group w-100 mb-2">
+                    <a href="/Cart/Add/@p.Id" class="btn btn-success">
+                      <i class="fas fa-cart-plus"></i> Thêm giỏ
+                    </a>
+                    <a href="/Compare/Add/@p.Id" class="btn btn-outline-info">
+                      <i class="fas fa-balance-scale"></i>
+                    </a>
+                  </div>
+                  <a href="/Home/Detail/@p.Id" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-info-circle me-1"></i>Chi tiết
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features-section">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-3"><div class="feature-box"><div class="feature-icon"><i class="fas fa-shipping-fast"></i></div><h5>Giao hàng nhanh</h5><p>Miễn phí vận chuyển toàn quốc cho đơn trên 5 triệu</p></div></div>
+      <div class="col-md-3"><div class="feature-box"><div class="feature-icon"><i class="fas fa-shield-alt"></i></div><h5>Bảo hành chính hãng</h5><p>100% xe và phụ tùng chính hãng</p></div></div>
+      <div class="col-md-3"><div class="feature-box"><div class="feature-icon"><i class="fas fa-undo"></i></div><h5>Đổi trả dễ dàng</h5><p>Đổi trả trong 7 ngày nếu lỗi NSX</p></div></div>
+      <div class="col-md-3"><div class="feature-box"><div class="feature-icon"><i class="fas fa-headset"></i></div><h5>Hỗ trợ 24/7</h5><p>Tư vấn nhanh, chuyên nghiệp</p></div></div>
+    </div>
+  </div>
+</section>

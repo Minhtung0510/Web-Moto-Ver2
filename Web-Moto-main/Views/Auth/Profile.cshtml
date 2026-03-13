@@ -1,0 +1,90 @@
+@model MotoBikeStore.Models.User
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Tài khoản"; }
+
+<div class="container py-5">
+  <h3 class="mb-4"><i class="fas fa-user-circle me-2"></i>Thông tin tài khoản</h3>
+  
+  @if(TempData["SuccessMessage"] != null)
+  {
+    <div class="alert alert-success alert-dismissible">
+      @TempData["SuccessMessage"]
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  }
+  
+  <div class="row g-4">
+    <!-- Profile Form -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">Chỉnh sửa thông tin</h5>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input asp-for="Email" class="form-control" readonly />
+              <small class="text-muted">Email không thể thay đổi</small>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Họ tên</label>
+              <input asp-for="FullName" class="form-control" required />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Số điện thoại</label>
+              <input asp-for="Phone" class="form-control" />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Địa chỉ</label>
+              <textarea asp-for="Address" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-2"></i>Cập nhật thông tin
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Account Info -->
+    <div class="col-md-4">
+      <div class="card mb-3">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">Thông tin tài khoản</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Vai trò:</strong> 
+            <span class="badge bg-@(Model.Role == "Admin" ? "danger" : "primary")">
+              @(Model.Role == "Admin" ? "Quản trị viên" : "Khách hàng")
+            </span>
+          </p>
+          <p><strong>Ngày tạo:</strong><br>@Model.CreatedAt.ToString("dd/MM/yyyy")</p>
+          <p><strong>Trạng thái:</strong> 
+            <span class="badge bg-success">Hoạt động</span>
+          </p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-body">
+          <h6 class="mb-3">Liên kết nhanh</h6>
+          <a href="/Orders/MyOrders" class="btn btn-outline-primary w-100 mb-2">
+            <i class="fas fa-receipt me-2"></i>Đơn hàng của tôi
+          </a>
+          <a href="/Orders/Track" class="btn btn-outline-info w-100 mb-2">
+            <i class="fas fa-truck me-2"></i>Tra cứu đơn hàng
+          </a>
+          <a href="/Auth/Logout" class="btn btn-outline-danger w-100">
+            <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

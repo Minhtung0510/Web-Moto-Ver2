@@ -1,0 +1,168 @@
+@model IEnumerable<MotoBikeStore.Models.Product>
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="So sánh sản phẩm"; }
+
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-balance-scale me-2"></i>So sánh sản phẩm</h3>
+    @if(Model.Any())
+    {
+      <a href="/Compare/Clear" class="btn btn-outline-danger btn-sm">
+        <i class="fas fa-trash me-1"></i>Xóa tất cả
+      </a>
+    }
+  </div>
+
+  @if(TempData["SuccessMessage"] != null)
+  {
+    <div class="alert alert-success alert-dismissible">
+      @TempData["SuccessMessage"]
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  }
+  
+  @if(TempData["ErrorMessage"] != null)
+  {
+    <div class="alert alert-danger alert-dismissible">
+      @TempData["ErrorMessage"]
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  }
+
+  @if(!Model.Any())
+  {
+    <div class="text-center py-5">
+      <i class="fas fa-balance-scale" style="font-size:5rem;opacity:0.2"></i>
+      <h5 class="mt-3">Chưa có sản phẩm để so sánh</h5>
+      <p class="text-muted">Hãy thêm sản phẩm vào danh sách so sánh từ trang chủ</p>
+      <a href="/" class="btn btn-primary mt-3">Xem sản phẩm</a>
+    </div>
+  }
+  else
+  {
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <tbody>
+          <tr class="bg-light">
+            <th style="width:150px">Sản phẩm</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">
+                <img src="@p.ImageUrl" style="height:120px;object-fit:contain" class="mb-2" />
+                <br>
+                <strong>@p.Name</strong>
+                <br>
+                <a href="/Compare/Remove/@p.Id" class="btn btn-sm btn-outline-danger mt-2">
+                  <i class="fas fa-times"></i> Xóa
+                </a>
+              </td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Giá bán</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">
+                <span class="text-danger fw-bold fs-5">@p.Price.ToString("N0")₫</span>
+                @if(p.OldPrice.HasValue)
+                {
+                  <br><del class="text-muted">@p.OldPrice.Value.ToString("N0")₫</del>
+                }
+              </td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Thương hiệu</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">@p.Brand</td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Danh mục</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">@(p.Category?.Name ?? "N/A")</td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Động cơ</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">@p.Engine</td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Bình nhiên liệu</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">@p.Fuel</td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Màu sắc</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">@(p.Color ?? "N/A")</td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Bảo hành</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">@(p.Warranty ?? "N/A")</td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Đánh giá</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">
+                <i class="fas fa-star text-warning"></i> @p.Rating.ToString("0.0")/5
+              </td>
+            }
+          </tr>
+          
+          <tr>
+            <th>Tồn kho</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">
+                @if(p.Stock > 0)
+                {
+                  <span class="badge bg-success">Còn hàng (@p.Stock)</span>
+                }
+                else
+                {
+                  <span class="badge bg-danger">Hết hàng</span>
+                }
+              </td>
+            }
+          </tr>
+          
+          <tr class="bg-light">
+            <th>Thao tác</th>
+            @foreach(var p in Model)
+            {
+              <td class="text-center">
+                <a href="/Cart/Add/@p.Id" class="btn btn-success btn-sm w-100 mb-2">
+                  <i class="fas fa-cart-plus"></i> Thêm giỏ hàng
+                </a>
+                <a href="/Home/Detail/@p.Id" class="btn btn-outline-primary btn-sm w-100">
+                  <i class="fas fa-info-circle"></i> Chi tiết
+                </a>
+              </td>
+            }
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

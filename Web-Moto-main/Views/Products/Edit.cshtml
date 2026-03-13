@@ -1,0 +1,154 @@
+@model MotoBikeStore.Models.Product
+@{
+    Layout="~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"]="Sửa sản phẩm";
+    var copyList = ViewBag.CopyList as IEnumerable<dynamic>;
+}
+
+<link rel="stylesheet" href="~/css/product-form.css" asp-append-version="true" />
+
+<div class="container py-4">
+  <h3 class="mb-4"><i class="fas fa-edit me-2"></i>Sửa sản phẩm: @Model.Name</h3>
+
+  <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="card shadow-sm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <div class="card-body">
+      <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+      <!-- ✅ QUAN TRỌNG: Thêm name attribute rõ ràng -->
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+          <input type="text" name="Name" id="Name" value="@Model.Name" class="form-control" required />
+          <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Thương hiệu <span class="text-danger">*</span></label>
+          <input type="text" name="Brand" id="Brand" value="@Model.Brand" class="form-control" required />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Danh mục (ID)</label>
+          <input type="number" name="CategoryId" id="CategoryId" value="@Model.CategoryId" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Giá bán (₫) <span class="text-danger">*</span></label>
+          <input type="number" name="Price" id="Price" value="@Model.Price" step="1000" class="form-control" required />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Giá cũ (₫)</label>
+          <input type="number" name="OldPrice" id="OldPrice" value="@Model.OldPrice" step="1000" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">% Giảm</label>
+          <input type="number" name="DiscountPercent" id="DiscountPercent" value="@Model.DiscountPercent" min="0" max="100" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Đánh giá</label>
+          <input type="number" name="Rating" id="Rating" value="@Model.Rating" step="0.1" min="0" max="5" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Tồn kho</label>
+          <input type="number" name="Stock" id="Stock" value="@Model.Stock" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Badge</label>
+          <input type="text" name="Badge" id="Badge" value="@Model.Badge" class="form-control" placeholder="Hot, New, Sale..." />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Màu sắc</label>
+          <input type="text" name="Color" id="Color" value="@Model.Color" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Bảo hành</label>
+          <input type="text" name="Warranty" id="Warranty" value="@Model.Warranty" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Động cơ <span class="text-danger">*</span></label>
+          <input type="text" name="Engine" id="Engine" value="@Model.Engine" class="form-control" required />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Nhiên liệu <span class="text-danger">*</span></label>
+          <input type="text" name="Fuel" id="Fuel" value="@Model.Fuel" class="form-control" required />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Mô tả</label>
+          <textarea name="Description" id="Description" rows="3" class="form-control">@Model.Description</textarea>
+        </div>
+
+        <!-- ẢNH -->
+        <div class="col-lg-6">
+          <label class="form-label">Ảnh hiện tại</label>
+          <div class="p-2 border rounded d-flex align-items-center gap-3">
+            <img src="@Model.ImageUrl" alt="Current" class="img-fluid rounded border" style="max-height:160px" />
+            <div class="small text-muted">Đang dùng: <code>@Model.ImageUrl</code></div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <label class="form-label">Chọn ảnh mới (tùy chọn)</label>
+          <div class="input-group">
+            <input type="file" name="ImageFile" id="ImageFile" accept="image/*" class="form-control" />
+            <button type="button" id="btnClearImg" class="btn btn-outline-secondary">Xóa chọn</button>
+          </div>
+          <img id="preview" alt="Preview" class="img-fluid rounded border d-none mt-2" style="max-height:160px" />
+          <div class="form-text">Để trống để giữ ảnh cũ. Tối đa 5MB. JPG/PNG/WebP.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer bg-white d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save me-1"></i>Cập nhật
+      </button>
+      <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+    </div>
+  </form>
+</div>
+
+@section Scripts{
+  <partial name="_ValidationScriptsPartial" />
+  
+  <script>
+    // Preview ảnh
+    document.getElementById('ImageFile')?.addEventListener('change', e => {
+      const file = e.target.files?.[0];
+      const preview = document.getElementById('preview');
+      if (!file) {
+        preview.classList.add('d-none');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        preview.src = ev.target.result;
+        preview.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Xóa chọn ảnh
+    document.getElementById('btnClearImg')?.addEventListener('click', () => {
+      const input = document.getElementById('ImageFile');
+      const preview = document.getElementById('preview');
+      if (input) input.value = "";
+      if (preview) {
+        preview.classList.add('d-none');
+        preview.src = "#";
+      }
+    });
+  </script>
+}

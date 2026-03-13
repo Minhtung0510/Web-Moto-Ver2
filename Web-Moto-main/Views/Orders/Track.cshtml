@@ -1,0 +1,169 @@
+@model MotoBikeStore.Models.Order
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Theo dõi đơn hàng"; }
+
+<div class="container py-5">
+  <h3 class="mb-4"><i class="fas fa-truck me-2"></i>Theo dõi đơn hàng</h3>
+  
+  @if(Model == null)
+  {
+    <div class="card">
+      <div class="card-body p-4">
+<h5 class="mb-0">Tra cứu đơn hàng</h5>
+        <form method="get" class="row g-3">
+          <div class="col-md-6">
+<input type="text" name="id" class="form-control" placeholder="Nhập mã đơn hoặc ID..." required />
+
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-search me-2"></i>Tra cứu
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <div class="text-center mt-4">
+      <p class="text-muted">Hoặc đăng nhập để xem tất cả đơn hàng của bạn</p>
+      <a href="/Auth/Login" class="btn btn-outline-primary">Đăng nhập</a>
+    </div>
+  }
+  else
+  {
+    <!-- Order Info -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Đơn hàng #@Model.Id</h5>
+          <span class="badge bg-@(Model.Status switch {
+            "Pending" => "warning",
+            "Confirmed" => "info",
+            "Processing" => "primary",
+            "Shipping" => "primary",
+            "Delivered" => "success",
+            "Cancelled" => "danger",
+            _ => "secondary"
+          }) fs-6">@Model.Status</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+            <p><strong>Khách hàng:</strong> @Model.CustomerName</p>
+            <p><strong>Số điện thoại:</strong> @Model.Phone</p>
+            <p><strong>Địa chỉ giao hàng:</strong> @Model.Address</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">@Model.Total.ToString("N0")₫</span></p>
+            @if(!string.IsNullOrEmpty(Model.TrackingNumber))
+            {
+              <p><strong>Mã vận đơn:</strong> @Model.TrackingNumber</p>
+            }
+            @if(Model.ShippedDate.HasValue)
+            {
+              <p><strong>Ngày giao:</strong> @Model.ShippedDate.Value.ToString("dd/MM/yyyy")</p>
+            }
+            @if(Model.DeliveredDate.HasValue)
+            {
+              <p><strong>Ngày nhận:</strong> @Model.DeliveredDate.Value.ToString("dd/MM/yyyy")</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Order Timeline -->
+    <div class="card mb-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">Trạng thái đơn hàng</h5>
+      </div>
+      <div class="card-body">
+        <div class="timeline">
+          @{
+            var statuses = new[] { "Pending", "Confirmed", "Processing", "Shipping", "Delivered" };
+            var currentIndex = Array.IndexOf(statuses, Model.Status);
+            if(currentIndex < 0) currentIndex = 0;
+          }
+          
+          @for(int i = 0; i < statuses.Length; i++)
+          {
+            var status = statuses[i];
+            var isDone = i <= currentIndex;
+            var isCurrent = i == currentIndex;
+            
+            <div class="timeline-item @(isDone ? "active" : "")">
+              <div class="timeline-icon">
+                <i class="fas @(status switch {
+                  "Pending" => "fa-clock",
+                  "Confirmed" => "fa-check",
+                  "Processing" => "fa-cog",
+                  "Shipping" => "fa-truck",
+                  "Delivered" => "fa-box-open",
+                  _ => "fa-circle"
+                })"></i>
+              </div>
+              <div class="timeline-content">
+                <h6 class="@(isCurrent ? "text-primary" : "")">@(status switch {
+                  "Pending" => "Chờ xác nhận",
+                  "Confirmed" => "Đã xác nhận",
+                  "Processing" => "Đang xử lý",
+                  "Shipping" => "Đang giao hàng",
+                  "Delivered" => "Đã giao hàng",
+                  _ => status
+                })</h6>
+                @if(isCurrent)
+                {
+                  <small class="text-muted">Trạng thái hiện tại</small>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+    
+    <!-- Order Items -->
+    <div class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">Chi tiết sản phẩm</h5>
+      </div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th class="text-center">Số lượng</th>
+              <th class="text-end">Đơn giá</th>
+              <th class="text-end">Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach(var item in Model.Details)
+            {
+              <tr>
+                <td>
+                  <img src="@item.Product.ImageUrl" style="height:40px" class="me-2" />
+                  @item.Product.Name
+                </td>
+                <td class="text-center">@item.Quantity</td>
+                <td class="text-end">@item.UnitPrice.ToString("N0")₫</td>
+                <td class="text-end fw-bold">@((item.Quantity * item.UnitPrice).ToString("N0"))₫</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<style>
+.timeline { position: relative; padding: 20px 0; }
+.timeline-item { display: flex; margin-bottom: 30px; position: relative; }
+.timeline-item:before { content: ''; position: absolute; left: 20px; top: 40px; height: 100%; width: 2px; background: #e0e0e0; }
+.timeline-item:last-child:before { display: none; }
+.timeline-icon { width: 40px; height: 40px; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; margin-right: 20px; position: relative; z-index: 1; }
+.timeline-item.active .timeline-icon { background: #0d6efd; color: white; }
+.timeline-content { flex: 1; }
+</style>

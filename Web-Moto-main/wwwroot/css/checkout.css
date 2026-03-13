@@ -1,0 +1,67 @@
+/* ===== Payment Methods ===== */
+.payment-methods{display:flex;flex-direction:column;gap:12px}
+.payment-option{position:relative}
+.payment-option .form-check-input{position:absolute;opacity:0;pointer-events:none}
+.payment-label{display:flex;align-items:center;padding:16px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:.3s;background:#fff}
+.payment-label:hover{border-color:#28a745;background:#f8fff9;transform:translateY(-2px);box-shadow:0 4px 12px rgba(40,167,69,.1)}
+.payment-option .form-check-input:checked~.payment-label{border-color:#28a745;background:#f0fff4;box-shadow:0 0 0 4px rgba(40,167,69,.1)}
+.payment-icon{width:50px;height:50px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:16px;font-size:24px}
+.cod-icon{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
+.qr-icon{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);color:#fff}
+.payment-info{flex:1}
+.payment-name{font-weight:600;font-size:15px;margin-bottom:4px}
+.payment-badge{margin-left:12px}
+
+/* ===== Coupon Card (Shopee style) ===== */
+.coupon-card{border:2px dashed #ff6b35;overflow:hidden}
+.coupon-header{padding:16px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;cursor:pointer;transition:.3s}
+.coupon-header:hover{background:linear-gradient(135deg,#764ba2 0%,#667eea 100%)}
+.coupon-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;font-size:20px}
+.coupon-body{padding:16px;background:#f8f9fa}
+.coupon-input-section{margin-bottom:16px}
+.coupon-divider{text-align:center;position:relative;margin:20px 0}
+.coupon-divider::before,.coupon-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#ddd}
+.coupon-divider::before{left:0}.coupon-divider::after{right:0}
+.coupon-divider span{background:#f8f9fa;padding:0 12px;color:#666;font-size:13px}
+.available-coupons{display:flex;flex-direction:column;gap:12px;max-height:300px;overflow-y:auto}
+.coupon-item{border:2px solid #e0e0e0;border-radius:12px;padding:12px;cursor:pointer;transition:.3s;background:#fff;position:relative}
+.coupon-item:hover{border-color:#667eea;transform:translateX(4px);box-shadow:0 4px 12px rgba(102,126,234,.15)}
+.coupon-item.selected{border-color:#28a745;background:#f0fff4}
+.coupon-item.disabled{opacity:.5;cursor:not-allowed}
+.coupon-code{font-weight:700;font-size:18px;color:#667eea;margin-bottom:4px}
+.coupon-desc{font-size:13px;color:#666;margin-bottom:8px}
+.coupon-value{font-weight:700;font-size:16px;color:#f5576c}
+.coupon-conditions,.coupon-expiry{font-size:11px;color:#999;margin-top:4px}
+.coupon-select-btn{position:absolute;top:12px;right:12px;background:#667eea;color:#fff;border:none;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.coupon-item.selected .coupon-select-btn{background:#28a745}
+.coupon-select-btn:hover{transform:scale(1.05)}
+
+/* ===== Seasonal Promotions ===== */
+.seasonal-card{border:2px dashed #28a745;overflow:hidden;transition:.3s}
+.seasonal-card:hover{box-shadow:0 5px 20px rgba(40,167,69,.2)}
+.seasonal-header{padding:16px;background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%);color:#fff;cursor:pointer;transition:.3s}
+.seasonal-header:hover{background:linear-gradient(135deg,#38ef7d 0%,#11998e 100%)}
+.seasonal-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:12px;font-size:20px;animation:rotate 3s linear infinite}
+@keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.seasonal-body{padding:16px;background:linear-gradient(135deg,#f5f7fa 0%,#e8f8e5 100%)}
+.seasonal-promotions-list{display:flex;flex-direction:column;gap:12px;max-height:400px;overflow-y:auto}
+.seasonal-item{border:2px solid #28a745;border-radius:12px;padding:12px;background:#fff;position:relative;display:flex;align-items:center;gap:12px;transition:.3s;cursor:default}
+.seasonal-item:hover:not(.disabled){transform:translateX(5px);box-shadow:0 5px 15px rgba(40,167,69,.2);background:#f0fff4}
+.seasonal-item.disabled{opacity:.6;border-color:#ccc;background:#f8f8f8}
+.seasonal-badge{width:50px;height:50px;background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.seasonal-content{flex:1}
+.seasonal-name{font-weight:700;font-size:16px;color:#333;margin-bottom:4px}
+.seasonal-desc{font-size:13px;color:#666;margin-bottom:6px}
+.seasonal-value{font-weight:700;font-size:18px;color:#28a745;margin-bottom:6px}
+.seasonal-condition{font-size:12px;color:#777;margin-top:4px}
+.seasonal-expiry{font-size:11px;color:#999;margin-top:4px}
+.seasonal-status{position:absolute;top:12px;right:12px}
+.seasonal-item:not(.disabled){animation:glow 3s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 5px rgba(40,167,69,.2)}50%{box-shadow:0 0 20px rgba(40,167,69,.4)}}
+.seasonal-condition .fa-calendar-week{animation:wiggle 2s ease-in-out infinite}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+@media (max-width:768px){.seasonal-item{flex-direction:column;text-align:center}.seasonal-status{position:static;margin-top:10px}}
+
+/* ===== Summary rows for double discounts ===== */
+#discountRowCoupon,#discountRowSeasonal{display:none}

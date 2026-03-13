@@ -1,0 +1,591 @@
+@model MotoBikeStore.Models.User
+@{ Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Chi tiết người dùng"; }
+
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="mb-1">
+        <i class="fas fa-user-circle me-2 text-primary"></i>
+        Chi tiết người dùng
+      </h3>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="/Admin">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="/Admin/Users">Người dùng</a></li>
+          <li class="breadcrumb-item active">@Model.FullName</li>
+        </ol>
+      </nav>
+    </div>
+    <div>
+      <a href="/Admin/Users" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Quay lại
+      </a>
+    </div>
+  </div>
+
+  @if(TempData["SuccessMessage"] != null)
+  {
+    <div class="alert alert-success alert-dismissible fade show">
+      <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  }
+
+  <div class="row g-4">
+    <!-- Left Column - User Info -->
+    <div class="col-lg-4">
+      <!-- Profile Card -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body text-center p-4">
+          <div class="avatar-wrapper mb-3">
+            <div class="user-avatar">
+              @{
+                var initials = string.Join("", Model.FullName.Split(' ').Take(2).Select(s => s[0]));
+              }
+              <span>@initials</span>
+            </div>
+            @if(Model.IsActive)
+            {
+              <span class="status-badge status-active">
+                <i class="fas fa-circle"></i>
+              </span>
+            }
+            else
+            {
+              <span class="status-badge status-inactive">
+                <i class="fas fa-circle"></i>
+              </span>
+            }
+          </div>
+          
+          <h4 class="mb-1">@Model.FullName</h4>
+          <p class="text-muted mb-3">@Model.Email</p>
+          
+          <div class="mb-3">
+            @if(Model.Role == "Admin")
+            {
+              <span class="badge bg-danger badge-lg">
+                <i class="fas fa-shield-alt me-1"></i>Quản trị viên
+              </span>
+            }
+            else
+            {
+              <span class="badge bg-primary badge-lg">
+                <i class="fas fa-user me-1"></i>Khách hàng
+              </span>
+            }
+          </div>
+
+          <div class="mb-3">
+            @if(Model.IsActive)
+            {
+              <span class="badge bg-success badge-lg">
+                <i class="fas fa-check-circle me-1"></i>Đang hoạt động
+              </span>
+            }
+            else
+            {
+              <span class="badge bg-secondary badge-lg">
+                <i class="fas fa-lock me-1"></i>Đã khóa
+              </span>
+            }
+          </div>
+
+          <div class="d-grid gap-2">
+            @if(Model.Role != "Admin")
+            {
+              <a href="/Admin/ToggleUserStatus/@Model.Id" class="btn @(Model.IsActive ? "btn-warning" : "btn-success")">
+                <i class="fas fa-@(Model.IsActive ? "lock" : "unlock") me-2"></i>
+                @(Model.IsActive ? "Khóa tài khoản" : "Mở khóa tài khoản")
+              </a>
+            }
+            else
+            {
+              <button class="btn btn-secondary" disabled>
+                <i class="fas fa-shield-alt me-2"></i>
+                Không thể khóa Admin
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Card -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-pie me-2 text-primary"></i>Thống kê
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="stat-item">
+            <div class="stat-icon bg-primary">
+              <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Tổng đơn hàng</div>
+              <div class="stat-value">@ViewBag.TotalOrders</div>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-icon bg-success">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Tổng chi tiêu</div>
+              <div class="stat-value">@(((decimal)ViewBag.TotalSpent).ToString("N0"))₫</div>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-icon bg-info">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Ngày tham gia</div>
+              <div class="stat-value small">@Model.CreatedAt.ToString("dd/MM/yyyy")</div>
+            </div>
+          </div>
+
+          @if(ViewBag.TotalOrders > 0)
+          {
+            <div class="stat-item mb-0">
+              <div class="stat-icon bg-warning">
+                <i class="fas fa-receipt"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Giá trị TB/đơn</div>
+                <div class="stat-value">@(((decimal)ViewBag.TotalSpent / ViewBag.TotalOrders).ToString("N0"))₫</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Details & Orders -->
+    <div class="col-lg-8">
+      <!-- User Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2 text-primary"></i>Thông tin chi tiết
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="info-group">
+                <label class="info-label">
+                  <i class="fas fa-user text-primary me-2"></i>Họ tên
+                </label>
+                <div class="info-value">@Model.FullName</div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="info-group">
+                <label class="info-label">
+                  <i class="fas fa-envelope text-primary me-2"></i>Email
+                </label>
+                <div class="info-value">
+                  <a href="mailto:@Model.Email">@Model.Email</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="info-group">
+                <label class="info-label">
+                  <i class="fas fa-phone text-primary me-2"></i>Số điện thoại
+                </label>
+                <div class="info-value">
+                  @if(!string.IsNullOrEmpty(Model.Phone))
+                  {
+                    <a href="tel:@Model.Phone">@Model.Phone</a>
+                  }
+                  else
+                  {
+                    <span class="text-muted">Chưa cập nhật</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="info-group">
+                <label class="info-label">
+                  <i class="fas fa-user-tag text-primary me-2"></i>Vai trò
+                </label>
+                <div class="info-value">
+                  @if(Model.Role == "Admin")
+                  {
+                    <span class="badge bg-danger">Quản trị viên</span>
+                  }
+                  else
+                  {
+                    <span class="badge bg-primary">Khách hàng</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="info-group">
+                <label class="info-label">
+                  <i class="fas fa-map-marker-alt text-primary me-2"></i>Địa chỉ
+                </label>
+                <div class="info-value">
+                  @if(!string.IsNullOrEmpty(Model.Address))
+                  {
+                    @Model.Address
+                  }
+                  else
+                  {
+                    <span class="text-muted">Chưa cập nhật</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="info-group">
+                <label class="info-label">
+                  <i class="fas fa-calendar-plus text-primary me-2"></i>Ngày đăng ký
+                </label>
+                <div class="info-value">
+                  @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="info-group">
+                <label class="info-label">
+                  <i class="fas fa-toggle-on text-primary me-2"></i>Trạng thái tài khoản
+                </label>
+                <div class="info-value">
+                  @if(Model.IsActive)
+                  {
+                    <span class="badge bg-success">Đang hoạt động</span>
+                  }
+                  else
+                  {
+                    <span class="badge bg-secondary">Đã khóa</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order History -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-history me-2 text-primary"></i>
+            Lịch sử đơn hàng (@ViewBag.TotalOrders)
+          </h5>
+          @if(ViewBag.TotalOrders > 0)
+          {
+            <div>
+              <button class="btn btn-sm btn-outline-primary" onclick="exportOrders()">
+                <i class="fas fa-download me-1"></i>Xuất Excel
+              </button>
+            </div>
+          }
+        </div>
+        <div class="card-body p-0">
+          @if(ViewBag.Orders != null && ((List<MotoBikeStore.Models.Order>)ViewBag.Orders).Any())
+          {
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Mã đơn</th>
+                    <th>Ngày đặt</th>
+                    <th>Sản phẩm</th>
+                    <th class="text-end">Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach(var order in (List<MotoBikeStore.Models.Order>)ViewBag.Orders)
+                  {
+                    <tr>
+                      <td>
+                        <strong class="text-primary">#@order.OrderCode</strong>
+                      </td>
+                      <td>
+                        <small>@order.OrderDate.ToString("dd/MM/yyyy")</small><br>
+                        <small class="text-muted">@order.OrderDate.ToString("HH:mm")</small>
+                      </td>
+                      <td>
+                        <small>@order.Details.Count sản phẩm</small>
+                      </td>
+                      <td class="text-end">
+                        <strong class="text-danger">@order.Total.ToString("N0")₫</strong>
+                      </td>
+                      <td>
+                        <span class="badge bg-@(order.Status switch {
+                          "Pending" => "warning",
+                          "Confirmed" => "info",
+                          "Processing" => "primary",
+                          "Shipping" => "primary",
+                          "Delivered" => "success",
+                          "Cancelled" => "danger",
+                          _ => "secondary"
+                        })">
+                          @(order.Status switch {
+                            "Pending" => "Chờ xác nhận",
+                            "Confirmed" => "Đã xác nhận",
+                            "Processing" => "Đang xử lý",
+                            "Shipping" => "Đang giao",
+                            "Delivered" => "Đã giao",
+                            "Cancelled" => "Đã hủy",
+                            _ => order.Status
+                          })
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        <a href="/Admin/OrderDetail/@order.Id" class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot class="table-light">
+                  <tr>
+                    <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                    <td class="text-end"><strong class="text-danger fs-5">@(((decimal)ViewBag.TotalSpent).ToString("N0"))₫</strong></td>
+                    <td colspan="2"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          }
+          else
+          {
+            <div class="text-center py-5">
+              <i class="fas fa-shopping-bag text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+              <h5 class="text-muted mt-3">Chưa có đơn hàng nào</h5>
+              <p class="text-muted">Người dùng này chưa thực hiện đơn hàng nào</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS -->
+<style>
+/* Avatar */
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.user-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 36px;
+  font-weight: bold;
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+}
+
+.status-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.status-active i {
+  color: #28a745;
+  font-size: 12px;
+}
+
+.status-inactive i {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+/* Badge */
+.badge-lg {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Stats */
+.stat-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Info Group */
+.info-group {
+  margin-bottom: 0;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.info-value {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+
+.info-value a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.info-value a:hover {
+  text-decoration: underline;
+}
+
+/* Card Shadow */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
+
+/* Table */
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Responsive */
+@@media (max-width: 768px) {
+  .user-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 28px;
+  }
+  
+  .stat-item {
+    padding: 12px 0;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+}
+
+/* Animation */
+@@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+</style>
+
+<!-- JavaScript -->
+<script>
+// Export orders to Excel (placeholder)
+function exportOrders() {
+  alert('Tính năng xuất Excel đang được phát triển.\n\nDữ liệu đơn hàng sẽ được xuất ra file Excel.');
+}
+
+// Confirm before lock/unlock
+document.querySelectorAll('a[href*="ToggleUserStatus"]').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    const isActive = this.classList.contains('btn-warning');
+    const action = isActive ? 'khóa' : 'mở khóa';
+    
+    if (!confirm(`Bạn có chắc chắn muốn ${action} tài khoản này không?`)) {
+      e.preventDefault();
+    }
+  });
+});
+</script>a
