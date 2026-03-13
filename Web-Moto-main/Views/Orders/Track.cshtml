@@ -139,17 +139,27 @@
             </tr>
           </thead>
           <tbody>
-            @foreach(var item in Model.Details)
+            @if(Model.Details != null)
             {
-              <tr>
-                <td>
-                  <img src="@item.Product.ImageUrl" style="height:40px" class="me-2" />
-                  @item.Product.Name
-                </td>
-                <td class="text-center">@item.Quantity</td>
-                <td class="text-end">@item.UnitPrice.ToString("N0")₫</td>
-                <td class="text-end fw-bold">@((item.Quantity * item.UnitPrice).ToString("N0"))₫</td>
-              </tr>
+              @foreach(var item in Model.Details)
+              {
+                <tr>
+                  <td>
+                    @if(item.Product != null)
+                    {
+                      <img src="@item.Product.ImageUrl" style="height:40px" class="me-2" />
+                      @item.Product.Name
+                    }
+                    else
+                    {
+                      <span class="text-muted">Sản phẩm không tồn tại</span>
+                    }
+                  </td>
+                  <td class="text-center">@item.Quantity</td>
+                  <td class="text-end">@item.UnitPrice.ToString("N0")₫</td>
+                  <td class="text-end fw-bold">@((item.Quantity * item.UnitPrice).ToString("N0"))₫</td>
+                </tr>
+              }
             }
           </tbody>
         </table>

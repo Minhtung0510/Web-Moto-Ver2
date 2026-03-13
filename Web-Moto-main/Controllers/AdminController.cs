@@ -112,6 +112,7 @@ public IActionResult Index()
                 order.DeliveredDate = DateTime.UtcNow;
             }
 
+            _db.SaveChanges();
             TempData["SuccessMessage"] = "Đã cập nhật trạng thái đơn hàng!";
             return RedirectToAction("OrderDetail", new { id });
         }

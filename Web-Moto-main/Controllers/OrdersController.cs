@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MotoBikeStore.Models;
 using MotoBikeStore.Services;
 using System.Linq;
@@ -81,11 +82,8 @@ namespace MotoBikeStore.Controllers
             if (hasError) return View(order);
 
             // Build order
-            order.Id = _db.Orders.Any() ? _db.Orders.Max(o => o.Id) + 1 : 1;
-            order.OrderCode = $"MB-{DateTime.UtcNow:yyyyMMdd}-{order.Id:D4}";
             order.Details = products.Select(p => new OrderDetail
             {
-                Id = _db.OrderDetails.Any() ? _db.OrderDetails.Max(od => od.Id) + 1 : 1,
                 OrderId = order.Id,
                 ProductId = p.Id,
                 Quantity = 1,
@@ -189,6 +187,9 @@ namespace MotoBikeStore.Controllers
             if (sess != null) order.UserId = sess.Id;
 
             _db .Orders.Add(order);
+            _db.SaveChanges();
+            order.OrderCode = $"MB-{DateTime.UtcNow:yyyyMMdd}-{order.Id:D4}";
+            _db.SaveChanges();
             HttpContext.Session.Remove(CART_KEY);
 
             // Thông báo
@@ -221,11 +222,16 @@ namespace MotoBikeStore.Controllers
         // GET: /Orders/BankTransfer/{id}
         public IActionResult BankTransfer(int id)
         {
-            var order = _db.Orders.FirstOrDefault(o => o.Id == id);
+            var order = _db.Orders
+                .Include(o => o.Details)
+                .FirstOrDefault(o => o.Id == id);
             if (order == null) return NotFound();
 
-            foreach (var d in order.Details)
-                d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
+            if (order.Details != null)
+            {
+                foreach (var d in order.Details)
+                    d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
+            }
 
             if (order.CouponId.HasValue)
                 order.Coupon = _db.Coupons.FirstOrDefault(c => c.Id == order.CouponId.Value);
@@ -238,16 +244,32 @@ namespace MotoBikeStore.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return View((Order?)null);
 
-            Order? order = _db.Orders.FirstOrDefault(o => o.OrderCode.Equals(id, StringComparison.OrdinalIgnoreCase));
-            if (order == null && int.TryParse(id, out var orderId))
-                order = _db.Orders.FirstOrDefault(o => o.Id == orderId);
-
-            if (order != null)
+            try
             {
-                foreach (var d in order.Details)
-                    d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
+                Order? order = _db.Orders
+                    .Include(o => o.Details)
+                    .FirstOrDefault(o => !string.IsNullOrEmpty(o.OrderCode) &&
+                        o.OrderCode.Equals(id, StringComparison.OrdinalIgnoreCase));
+
+                if (order == null && int.TryParse(id, out var orderId))
+                    order = _db.Orders
+                        .Include(o => o.Details)
+                        .FirstOrDefault(o => o.Id == orderId);
+
+                if (order != null && order.Details != null)
+                {
+                    foreach (var d in order.Details)
+                        d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
+                }
+
+                return View(order);
             }
-            return View(order);
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Track] Error: " + ex);
+                // Trả về view trống thay vì ném lỗi 500
+                return View((Order?)null);
+            }
         }
 
         // GET: /Orders/MyOrders
@@ -259,12 +281,16 @@ namespace MotoBikeStore.Controllers
             var userId = (int)sess.Id;
             var orders = _db.Orders
                 .Where(o => o.UserId == userId)
+                .Include(o => o.Details)
                 .OrderByDescending(o => o.OrderDate)
                 .ToList();
 
             foreach (var o in orders)
+            {
+                if (o.Details == null) continue;
                 foreach (var d in o.Details)
                     d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
+            }
 
             return View(orders);
         }

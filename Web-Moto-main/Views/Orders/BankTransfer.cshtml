@@ -215,16 +215,26 @@
           <div class="table-responsive">
             <table class="table table-sm mb-0">
               <tbody>
-                @foreach(var item in Model.Details)
+                @if(Model.Details != null)
                 {
-                  <tr>
-                    <td>
-                      <img src="@item.Product.ImageUrl" style="width:40px;height:40px;object-fit:contain" class="me-2" />
-                      @item.Product.Name
-                    </td>
-                    <td class="text-end">x@item.Quantity</td>
-                    <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("N0"))₫</td>
-                  </tr>
+                  @foreach(var item in Model.Details)
+                  {
+                    <tr>
+                      <td>
+                        @if(item.Product != null)
+                        {
+                          <img src="@item.Product.ImageUrl" style="width:40px;height:40px;object-fit:contain" class="me-2" />
+                          @item.Product.Name
+                        }
+                        else
+                        {
+                          <span class="text-muted">Sản phẩm không tồn tại</span>
+                        }
+                      </td>
+                      <td class="text-end">x@item.Quantity</td>
+                      <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("N0"))₫</td>
+                    </tr>
+                  }
                 }
                 <tr class="table-light fw-bold">
                   <td colspan="2">Tổng cộng:</td>

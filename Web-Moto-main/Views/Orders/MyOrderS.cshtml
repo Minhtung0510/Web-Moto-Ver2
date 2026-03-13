@@ -60,23 +60,36 @@
         </div>
         <div class="card-body">
           <div class="row g-2">
-            @foreach(var detail in order.Details.Take(3))
+            @if(order.Details != null)
             {
-              <div class="col-md-4">
-                <div class="d-flex">
-                  <img src="@detail.Product.ImageUrl" style="width:60px;height:60px;object-fit:contain" class="me-2" />
-                  <div>
-                    <small class="fw-bold">@detail.Product.Name</small><br>
-                    <small class="text-muted">SL: @detail.Quantity | @detail.UnitPrice.ToString("N0")₫</small>
+              @foreach(var detail in order.Details.Take(3))
+              {
+                <div class="col-md-4">
+                  <div class="d-flex">
+                    @if(detail.Product != null)
+                    {
+                      <img src="@detail.Product.ImageUrl" style="width:60px;height:60px;object-fit:contain" class="me-2" />
+                      <div>
+                        <small class="fw-bold">@detail.Product.Name</small><br>
+                        <small class="text-muted">SL: @detail.Quantity | @detail.UnitPrice.ToString("N0")₫</small>
+                      </div>
+                    }
+                    else
+                    {
+                      <div>
+                        <small class="fw-bold text-muted">Sản phẩm không tồn tại</small><br>
+                        <small class="text-muted">SL: @detail.Quantity | @detail.UnitPrice.ToString("N0")₫</small>
+                      </div>
+                    }
                   </div>
                 </div>
-              </div>
-            }
-            @if(order.Details.Count > 3)
-            {
-              <div class="col-md-4 d-flex align-items-center">
-                <small class="text-muted">Và @(order.Details.Count - 3) sản phẩm khác...</small>
-              </div>
+              }
+              @if(order.Details.Count > 3)
+              {
+                <div class="col-md-4 d-flex align-items-center">
+                  <small class="text-muted">Và @(order.Details.Count - 3) sản phẩm khác...</small>
+                </div>
+              }
             }
           </div>
         </div>
