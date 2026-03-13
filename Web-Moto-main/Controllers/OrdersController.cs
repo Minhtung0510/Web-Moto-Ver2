@@ -31,13 +31,14 @@ namespace MotoBikeStore.Controllers
             ViewBag.Subtotal = products.Sum(p => p.Price);
 
             // Seasonal cho UI
-            var activePromos = SeasonalPromotionService.GetActivePromotions();
+           var allPromos = _db.SeasonalPromotions.ToList();
+var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
             ViewBag.SeasonalPromotions = activePromos;
 
             decimal potentialSeasonal = 0m;
             foreach (var product in products)
             {
-                var bestPercent = SeasonalPromotionService.GetBestDiscount(product);
+               var bestPercent = SeasonalPromotionService.GetBestDiscount(product, activePromos);
                 if (bestPercent > 0) potentialSeasonal += product.Price * bestPercent / 100m;
             }
             ViewBag.PotentialSeasonalDiscount = potentialSeasonal;
@@ -62,12 +63,13 @@ namespace MotoBikeStore.Controllers
             ViewBag.Subtotal = products.Sum(p => p.Price);
 
             // Bind lại seasonal UI nếu trả về View(order)
-            var activePromos = SeasonalPromotionService.GetActivePromotions();
+         var allPromos = _db.SeasonalPromotions.ToList();
+var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
             ViewBag.SeasonalPromotions = activePromos;
             decimal potentialSeasonal = 0m;
             foreach (var product in products)
             {
-                var bestPercent = SeasonalPromotionService.GetBestDiscount(product);
+                var bestPercent = SeasonalPromotionService.GetBestDiscount(product, activePromos);
                 if (bestPercent > 0) potentialSeasonal += product.Price * bestPercent / 100m;
             }
             ViewBag.PotentialSeasonalDiscount = potentialSeasonal;
@@ -99,7 +101,7 @@ namespace MotoBikeStore.Controllers
             string seasonalPromotionApplied = "";
             foreach (var product in products)
             {
-                var bestPercent = SeasonalPromotionService.GetBestDiscount(product);
+                var bestPercent = SeasonalPromotionService.GetBestDiscount(product, activePromos);
                 if (bestPercent > 0)
                 {
                     seasonalDiscountAmount += product.Price * bestPercent / 100m;
@@ -246,11 +248,10 @@ namespace MotoBikeStore.Controllers
 
             try
             {
-                Order? order = _db.Orders
-                    .Include(o => o.Details)
-                    .FirstOrDefault(o => !string.IsNullOrEmpty(o.OrderCode) &&
-                        o.OrderCode.Equals(id, StringComparison.OrdinalIgnoreCase));
-
+               Order? order = _db.Orders
+    .Include(o => o.Details)
+    .FirstOrDefault(o => !string.IsNullOrEmpty(o.OrderCode) &&
+        o.OrderCode.ToLower() == id.ToLower());
                 if (order == null && int.TryParse(id, out var orderId))
                     order = _db.Orders
                         .Include(o => o.Details)

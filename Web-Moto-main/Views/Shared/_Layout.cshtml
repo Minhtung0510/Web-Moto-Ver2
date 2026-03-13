@@ -61,9 +61,9 @@
       <div id="nav" class="collapse navbar-collapse">
         <ul class="navbar-nav mx-auto">
           <li class="nav-item"><a class="nav-link active" href="/">Trang chủ</a></li>
-          <li class="nav-item"><a class="nav-link" href="/?categoryId=1">Xe tay ga</a></li>
-          <li class="nav-item"><a class="nav-link" href="/?categoryId=2">Xe số</a></li>
-          <li class="nav-item"><a class="nav-link" href="/?categoryId=3">Phụ tùng</a></li>
+          <li class="nav-item"><a class="nav-link" href="/?categoryName=Xe Tay Ga">Xe tay ga</a></li>
+          <li class="nav-item"><a class="nav-link" href="/?categoryName=Xe Số">Xe số</a></li>
+          <li class="nav-item"><a class="nav-link" href="/?categoryName=Phụ Tùng">Phụ tùng</a></li>
           <li class="nav-item"><a class="nav-link" href="/Compare">So sánh</a></li>
           @if(isLoggedIn)
           {
@@ -143,7 +143,9 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-  <script src="/js/site.js"></script>
+  <script src="/js/site.js"></script> 
+  <script src="/js/site-scroll.js"></script>
+  
   <script>
     // Update compare count badge
     fetch('/Compare/Count')

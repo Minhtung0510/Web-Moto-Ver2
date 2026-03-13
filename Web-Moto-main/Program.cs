@@ -37,8 +37,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 // ✅ KHỞI TẠO SEASONAL PROMOTIONS
-SeasonalPromotionService.Initialize();
-Console.WriteLine($"✓ Seasonal Promotions: {SeasonalPromotionService.GetAll().Count}");
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

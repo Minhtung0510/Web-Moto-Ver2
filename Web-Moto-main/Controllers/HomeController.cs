@@ -14,10 +14,16 @@ namespace MotoBikeStore.Controllers
         // ✅ KHÔNG CẦN inject DbContext
         
         public IActionResult Index(string? brand, string? q, int? categoryId, 
-            decimal? minPrice, decimal? maxPrice, string? sortBy)
+            decimal? minPrice, decimal? maxPrice, string? sortBy,string? categoryName)
         {
             // ✅ Dùng InMemoryDataStore thay vì _db
             var query = _db.Products.AsQueryable();
+          if (categoryId == null && !string.IsNullOrEmpty(categoryName))
+    {
+        var cat = _db.Categories
+            .FirstOrDefault(c => c.Name == categoryName);
+        if (cat != null) categoryId = cat.Id;
+    }
 
             // Filters
             if (!string.IsNullOrWhiteSpace(brand))
