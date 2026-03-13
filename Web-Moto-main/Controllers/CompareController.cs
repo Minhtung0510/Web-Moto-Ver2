@@ -6,8 +6,14 @@ using System.Collections.Generic;
 
 namespace MotoBikeStore.Controllers
 {
+    
     public class CompareController : Controller
     {
+        private readonly MotoBikeContext _db;
+        public CompareController(MotoBikeContext context)
+        {
+            _db = context;
+        }
         const string COMPARE_KEY = "COMPARE_ITEMS";
         const int MAX_COMPARE = 4;
         
@@ -19,7 +25,7 @@ namespace MotoBikeStore.Controllers
             var items = HttpContext.Session.GetObjectFromJson<List<int>>(COMPARE_KEY) ?? new List<int>();
             
             // ✅ Dùng InMemoryDataStore
-            var products = InMemoryDataStore.Products
+            var products = _db.Products
                 .Where(p => items.Contains(p.Id))
                 .ToList();
             
@@ -28,7 +34,7 @@ namespace MotoBikeStore.Controllers
             {
                 if (product.CategoryId.HasValue)
                 {
-                    product.Category = InMemoryDataStore.Categories
+                    product.Category = _db.Categories
                         .FirstOrDefault(c => c.Id == product.CategoryId.Value);
                 }
             }

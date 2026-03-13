@@ -6,6 +6,11 @@ namespace MotoBikeStore.Controllers
 {
     public class SeasonalPromotionsController : Controller
     {
+        private readonly MotoBikeContext _db;
+        public SeasonalPromotionsController(MotoBikeContext context)
+        {
+            _db = context;
+        }
         const string USER_KEY = "CURRENT_USER";
         
         private bool IsAdmin()
@@ -23,6 +28,25 @@ namespace MotoBikeStore.Controllers
                 .OrderByDescending(p => p.StartDate)
                 .ToList();
             
+            // Load categories for promotions that apply to specific categories
+            var categoryIds = promotions
+                .Where(p => p.ApplyTo == "Category" && p.CategoryId.HasValue)
+                .Select(p => p.CategoryId.Value)
+                .Distinct()
+                .ToList();
+            
+            if (categoryIds.Any())
+            {
+                var categories = _db.Categories
+                    .Where(c => categoryIds.Contains(c.Id))
+                    .ToDictionary(c => c.Id);
+                
+                foreach (var promo in promotions.Where(p => p.ApplyTo == "Category" && p.CategoryId.HasValue))
+                {
+                    promo.Category = categories.GetValueOrDefault(promo.CategoryId.Value);
+                }
+            }
+            
             return View(promotions);
         }
         
@@ -30,8 +54,8 @@ namespace MotoBikeStore.Controllers
         public IActionResult Create()
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
-            ViewBag.Categories = InMemoryDataStore.Categories;
-            ViewBag.Brands = InMemoryDataStore.Products.Select(p => p.Brand).Distinct().ToList();
+            ViewBag.Categories = _db.Categories.ToList();
+            ViewBag.Brands = _db.Products.Select(p => p.Brand).Distinct().ToList();
             return View();
         }
         

@@ -7,11 +7,16 @@ namespace MotoBikeStore.Controllers
 {
     public class ValidateCouponRequest
 {
-    public string code { get; set; }
+    public string? Code { get; set; }
     public decimal orderAmount { get; set; }
 }
     public class CouponsController : Controller
     {
+        private readonly MotoBikeContext _db;
+        public CouponsController(MotoBikeContext context)
+        {
+            _db = context;
+        }
         const string USER_KEY = "CURRENT_USER";
         
         private bool IsAdmin()
@@ -26,24 +31,23 @@ namespace MotoBikeStore.Controllers
         {
             var now = DateTime.UtcNow;
             
-            var availableCoupons = InMemoryDataStore.Coupons
+            var availableCoupons = _db.Coupons
                 .Where(c => 
                     c.IsActive && 
                     c.StartDate <= now && 
                     c.EndDate >= now &&
                     (c.UsageLimit == 0 || c.UsedCount < c.UsageLimit)
                 )
-                .OrderByDescending(c => {
-                    // Tính discount để sort theo giá trị giảm
-                    if (c.DiscountPercent > 0)
-                    {
-                        var discount = orderAmount * c.DiscountPercent / 100;
-                        if (c.MaxDiscountAmount.HasValue && discount > c.MaxDiscountAmount.Value)
-                            return c.MaxDiscountAmount.Value;
-                        return discount;
-                    }
-                    return c.DiscountAmount ?? 0;
-                })
+                .OrderByDescending(c => 
+            c.DiscountPercent > 0
+        ? (
+            c.MaxDiscountAmount.HasValue &&
+            (orderAmount * c.DiscountPercent / 100) > c.MaxDiscountAmount.Value
+                ? c.MaxDiscountAmount.Value
+                : (orderAmount * c.DiscountPercent / 100)
+          )
+        : (c.DiscountAmount ?? 0)
+                )
                 .Select(c => new {
                     c.Id,
                     c.Code,
@@ -67,7 +71,7 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var coupons = InMemoryDataStore.Coupons
+            var coupons = _db.Coupons
                 .OrderByDescending(c => c.StartDate)
                 .ToList();
             
@@ -100,7 +104,7 @@ namespace MotoBikeStore.Controllers
                 return View("Create");
             }
             
-            if (InMemoryDataStore.Coupons.Any(c => 
+            if (_db.Coupons.Any(c => 
                 c.Code.Equals(code, StringComparison.OrdinalIgnoreCase)))
             {
                 TempData["ErrorMessage"] = "Mã giảm giá đã tồn tại";
@@ -133,7 +137,7 @@ namespace MotoBikeStore.Controllers
             
             var coupon = new Coupon
             {
-                Id = InMemoryDataStore.GetNextCouponId(),
+                Id = _db.Coupons.Max(c => c.Id) + 1,
                 Code = code,
                 Description = $"Giảm {discountPercent}% - Mã {code}",
                 DiscountPercent = discountPercent,
@@ -147,10 +151,11 @@ namespace MotoBikeStore.Controllers
                 IsActive = true
             };
             
-            InMemoryDataStore.Coupons.Add(coupon);
+            _db.Coupons.Add(coupon);
+            _db.SaveChanges();
             
             Console.WriteLine($"[DEBUG COUPON] Added: ID={coupon.Id}, Code={coupon.Code}");
-            Console.WriteLine($"[DEBUG COUPON] Total coupons: {InMemoryDataStore.Coupons.Count}");
+            Console.WriteLine($"[DEBUG COUPON] Total coupons: {_db.Coupons.Count()}");
             
             TempData["SuccessMessage"] = $"Tạo mã giảm giá {coupon.Code} thành công!";
             return RedirectToAction("Index");
@@ -161,7 +166,7 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var coupon = InMemoryDataStore.Coupons.FirstOrDefault(c => c.Id == id);
+            var coupon = _db.Coupons.FirstOrDefault(c => c.Id == id);
             if (coupon == null) return NotFound();
             
             return View(coupon);
@@ -174,7 +179,7 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var existing = InMemoryDataStore.Coupons.FirstOrDefault(c => c.Id == id);
+            var existing = _db.Coupons.FirstOrDefault(c => c.Id == id);
             if (existing == null) return NotFound();
             
             var discountPercent = decimal.TryParse(Request.Form["DiscountPercent"], out var dp) ? dp : existing.DiscountPercent;
@@ -201,7 +206,7 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var coupon = InMemoryDataStore.Coupons.FirstOrDefault(c => c.Id == id);
+            var coupon = _db.Coupons.FirstOrDefault(c => c.Id == id);
             if (coupon == null) return NotFound();
             
             return View(coupon);
@@ -214,10 +219,11 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var coupon = InMemoryDataStore.Coupons.FirstOrDefault(c => c.Id == id);
+            var coupon = _db.Coupons.FirstOrDefault(c => c.Id == id);
             if (coupon != null)
             {
-                InMemoryDataStore.Coupons.Remove(coupon);
+                _db.Coupons.Remove(coupon);
+                _db.SaveChanges();
                 TempData["SuccessMessage"] = "Xóa mã giảm giá thành công!";
             }
             
@@ -228,8 +234,8 @@ namespace MotoBikeStore.Controllers
         public IActionResult ToggleStatus(int id)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
-            
-            var coupon = InMemoryDataStore.Coupons.FirstOrDefault(c => c.Id == id);
+
+            var coupon = _db.Coupons.FirstOrDefault(c => c.Id == id);
             if (coupon != null)
             {
                 coupon.IsActive = !coupon.IsActive;
@@ -245,7 +251,7 @@ namespace MotoBikeStore.Controllers
        [HttpPost]
 public JsonResult Validate([FromBody] ValidateCouponRequest request)
 {
-    var code = request?.code?.Trim() ?? "";
+    var code = request?.Code?.Trim() ?? "";
     var orderAmount = request?.orderAmount ?? 0;
     
     Console.WriteLine($"[COUPON API] Validating: Code='{code}', Amount={orderAmount}");
@@ -263,7 +269,7 @@ public JsonResult Validate([FromBody] ValidateCouponRequest request)
         return Json(new { valid = false, message = "Giá trị đơn hàng không hợp lệ" });
     }
     
-    var coupon = InMemoryDataStore.Coupons.FirstOrDefault(c =>
+    var coupon = _db.Coupons.FirstOrDefault(c =>
         c.Code.Equals(code, StringComparison.OrdinalIgnoreCase) &&
         c.IsActive &&
         c.StartDate <= DateTime.UtcNow &&

@@ -17,6 +17,9 @@ namespace MotoBikeStore.Services
         public string? ApplyTo { get; set; } // "All", "Category", "Brand"
         public int? CategoryId { get; set; }
         public string? Brand { get; set; }
+        
+        // Navigation property
+        public Category? Category { get; set; }
     }
     
     public static class SeasonalPromotionService

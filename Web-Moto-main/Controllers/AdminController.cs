@@ -7,6 +7,11 @@ namespace MotoBikeStore.Controllers
 {
     public class AdminController : Controller
     {
+        private readonly MotoBikeContext _db;
+        public AdminController(MotoBikeContext context)
+        {
+            _db = context;
+        }
         const string USER_KEY = "CURRENT_USER";
 
         private bool IsAdmin()
@@ -22,13 +27,13 @@ namespace MotoBikeStore.Controllers
             var today = DateTime.UtcNow.Date;
             var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-            var orders = InMemoryDataStore.Orders;
-            var users = InMemoryDataStore.Users;
-            var products = InMemoryDataStore.Products;
+            var orders = _db.Orders;
+            var users = _db.Users;
+            var products = _db.Products;
 
-            ViewBag.TotalOrders = orders.Count;
+            ViewBag.TotalOrders = orders.Count();
             ViewBag.TotalRevenue = orders.Sum(o => (decimal?)o.Total) ?? 0;
-            ViewBag.TotalProducts = products.Count;
+            ViewBag.TotalProducts = products.Count();
             ViewBag.TotalCustomers = users.Count(u => u.Role == "Customer");
             ViewBag.MonthlyRevenue = orders.Where(o => o.OrderDate >= thisMonth)
                                             .Sum(o => (decimal?)o.Total) ?? 0;
@@ -61,7 +66,7 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-            var q = InMemoryDataStore.Orders.AsEnumerable();
+            var q = _db.Orders.AsEnumerable();
             if (!string.IsNullOrEmpty(status))
                 q = q.Where(o => o.Status == status);
 
@@ -74,12 +79,12 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-            var order = InMemoryDataStore.Orders.FirstOrDefault(o => o.Id == id);
+            var order = _db.Orders.FirstOrDefault(o => o.Id == id);
             if (order == null) return NotFound();
 
             // nạp Product cho mỗi OrderDetail để View dùng
             foreach (var d in order.Details)
-                d.Product = InMemoryDataStore.Products.FirstOrDefault(p => p.Id == d.ProductId);
+                d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
 
             // nạp Coupon nếu cần (nếu bạn lưu coupon in-memory, thêm store tương ứng)
             return View(order);
@@ -90,7 +95,7 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-            var order = InMemoryDataStore.Orders.FirstOrDefault(o => o.Id == id);
+            var order = _db.Orders.FirstOrDefault(o => o.Id == id);
             if (order == null) return NotFound();
 
             order.Status = status;
@@ -115,7 +120,7 @@ namespace MotoBikeStore.Controllers
     year ??= DateTime.UtcNow.Year;
     month ??= DateTime.UtcNow.Month;
 
-    var orders = InMemoryDataStore.Orders.Where(o => o.Status != "Cancelled").ToList();
+    var orders = _db.Orders.Where(o => o.Status != "Cancelled").ToList();
 
     // ✅ QUAN TRỌNG: Phải dùng lowercase!
     var monthlyRevenue = orders
@@ -164,7 +169,7 @@ namespace MotoBikeStore.Controllers
         .Take(10)
         .ToList();
 
-    var users = InMemoryDataStore.Users;
+    var users = _db.Users;
     ViewBag.TopCustomers = topCustomers.Select(tc => new
     {
         Customer = users.FirstOrDefault(u => u.Id == tc.UserId),
@@ -181,7 +186,7 @@ public IActionResult Users()
 {
     if (!IsAdmin()) return RedirectToAction("Login", "Auth");
     
-    var users = InMemoryDataStore.Users
+    var users = _db.Users
         .OrderByDescending(u => u.CreatedAt)
         .ToList();
     
@@ -192,11 +197,11 @@ public IActionResult UserDetail(int id)
 {
     if (!IsAdmin()) return RedirectToAction("Login", "Auth");
     
-    var user = InMemoryDataStore.Users.FirstOrDefault(u => u.Id == id);
+    var user = _db.Users.FirstOrDefault(u => u.Id == id);
     if (user == null) return NotFound();
     
     // Lấy đơn hàng của user
-    var orders = InMemoryDataStore.Orders
+    var orders = _db.Orders
         .Where(o => o.UserId == id)
         .OrderByDescending(o => o.OrderDate)
         .ToList();
@@ -213,7 +218,7 @@ public IActionResult ToggleUserStatus(int id)
 {
     if (!IsAdmin()) return RedirectToAction("Login", "Auth");
     
-    var user = InMemoryDataStore.Users.FirstOrDefault(u => u.Id == id);
+    var user = _db.Users.FirstOrDefault(u => u.Id == id);
     if (user != null && user.Role != "Admin") // Không khóa Admin
     {
         user.IsActive = !user.IsActive;

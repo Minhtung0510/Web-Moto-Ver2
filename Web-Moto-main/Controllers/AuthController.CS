@@ -7,8 +7,14 @@ namespace MotoBikeStore.Controllers
 {
     public class AuthController : Controller
     {
-        const string USER_KEY = "CURRENT_USER";
+             private readonly MotoBikeContext _db;
+        public AuthController(MotoBikeContext context)    
+        {
+            _db = context;
+        }
 
+        const string USER_KEY = "CURRENT_USER";
+       
         public IActionResult Login(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -20,8 +26,8 @@ namespace MotoBikeStore.Controllers
         {
             Console.WriteLine($"[DEBUG] Attempt login: {email}");
 
-            var user = InMemoryDataStore.Users
-                .FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase) && u.IsActive);
+            var user = _db.Users
+                .FirstOrDefault(u => u.Email == email && u.IsActive);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
@@ -72,7 +78,7 @@ namespace MotoBikeStore.Controllers
     }
 
     // 2) Các validate còn lại
-    if (InMemoryDataStore.Users.Any(u => 
+    if (_db.Users.Any(u => 
         u.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase)))
     {
         ModelState.AddModelError("Email", "Email đã được sử dụng");
@@ -90,15 +96,16 @@ namespace MotoBikeStore.Controllers
     }
 
     // 3) Lưu user
-    user.Id = InMemoryDataStore.Users.Any() ? InMemoryDataStore.Users.Max(u => u.Id) + 1 : 1;
+    user.Id = _db.Users.Any() ? _db.Users.Max(u => u.Id) + 1 : 1;
     user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
     user.Role = "Customer";
     user.IsActive = true;
     user.CreatedAt = DateTime.UtcNow;
 
-    InMemoryDataStore.Users.Add(user);
+    _db.Users.Add(user);
+    _db.SaveChanges();
     Console.WriteLine($"[DEBUG] Registered: {user.Email} (Id={user.Id})");
-    Console.WriteLine("[DEBUG] Current users: " + string.Join(", ", InMemoryDataStore.Users.Select(u => u.Email)));
+    Console.WriteLine("[DEBUG] Current users: " + string.Join(", ", _db.Users.Select(u => u.Email)));
 
     TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
     return RedirectToAction("Login");
@@ -115,7 +122,7 @@ namespace MotoBikeStore.Controllers
               var sess = HttpContext.Session.GetObjectFromJson<UserSession>("CURRENT_USER");
     if (sess == null) return RedirectToAction("Login");
 
-    var user = InMemoryDataStore.Users.FirstOrDefault(u => u.Id == sess.Id);
+    var user = _db.Users.FirstOrDefault(u => u.Id == sess.Id);
     if (user == null) return RedirectToAction("Logout");
 
     return View(user);
@@ -124,16 +131,17 @@ namespace MotoBikeStore.Controllers
         [HttpPost]
         public IActionResult Profile(User updatedUser)
         {
-            var current = HttpContext.Session.GetObjectFromJson<dynamic>(USER_KEY);
+            var current = HttpContext.Session.GetObjectFromJson<User>(USER_KEY);
             if (current == null) return RedirectToAction("Login");
 
-            var user = InMemoryDataStore.Users.FirstOrDefault(u => u.Id == (int)current.Id);
+            var user = _db.Users.FirstOrDefault(u => u.Id == current.Id);
             if (user == null) return RedirectToAction("Logout");
 
             user.FullName = updatedUser.FullName;
             user.Phone    = updatedUser.Phone;
             user.Address  = updatedUser.Address;
 
+            _db.SaveChanges();
             TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
             return RedirectToAction("Profile");
         }

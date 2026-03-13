@@ -54,8 +54,7 @@
                 }
                 else if(promo.ApplyTo == "Category")
                 {
-                  var cat = MotoBikeStore.Services.InMemoryDataStore.Categories.FirstOrDefault(c => c.Id == promo.CategoryId);
-                  <span class="badge bg-info">@(cat?.Name ?? "Category")</span>
+                  <span class="badge bg-info">@(promo.Category?.Name ?? $"Danh mục #{promo.CategoryId}")</span>
                 }
                 else if(promo.ApplyTo == "Brand")
                 {

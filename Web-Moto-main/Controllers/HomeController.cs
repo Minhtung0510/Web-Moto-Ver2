@@ -6,13 +6,18 @@ namespace MotoBikeStore.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly MotoBikeContext _db;
+        public HomeController(MotoBikeContext context)
+        {
+                _db = context;
+        }
         // ✅ KHÔNG CẦN inject DbContext
         
         public IActionResult Index(string? brand, string? q, int? categoryId, 
             decimal? minPrice, decimal? maxPrice, string? sortBy)
         {
             // ✅ Dùng InMemoryDataStore thay vì _db
-            var query = InMemoryDataStore.Products.AsQueryable();
+            var query = _db.Products.AsQueryable();
 
             // Filters
             if (!string.IsNullOrWhiteSpace(brand))
@@ -53,14 +58,14 @@ namespace MotoBikeStore.Controllers
             {
                 if (product.CategoryId.HasValue)
                 {
-                    product.Category = InMemoryDataStore.Categories
+                    product.Category = _db.Categories
                         .FirstOrDefault(c => c.Id == product.CategoryId.Value);
                 }
             }
 
             // ViewBag data
-            ViewBag.Categories = InMemoryDataStore.Categories.ToList();
-            ViewBag.Brands = InMemoryDataStore.Products
+            ViewBag.Categories = _db.Categories.ToList();
+            ViewBag.Brands = _db.Products
                 .Select(p => p.Brand)
                 .Distinct()
                 .OrderBy(b => b)
@@ -78,7 +83,7 @@ namespace MotoBikeStore.Controllers
 
         public IActionResult Detail(int id)
         {
-            var product = InMemoryDataStore.Products
+            var product = _db.Products
                 .FirstOrDefault(p => p.Id == id);
 
             if (product == null)
@@ -87,12 +92,12 @@ namespace MotoBikeStore.Controllers
             // Populate category
             if (product.CategoryId.HasValue)
             {
-                product.Category = InMemoryDataStore.Categories
+                product.Category = _db.Categories
                     .FirstOrDefault(c => c.Id == product.CategoryId.Value);
             }
 
             // Related products
-            var relatedProducts = InMemoryDataStore.Products
+            var relatedProducts = _db.Products
                 .Where(p => p.Id != id &&
                     (p.Brand == product.Brand || 
                      p.CategoryId == product.CategoryId))

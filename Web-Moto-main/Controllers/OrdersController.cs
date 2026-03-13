@@ -7,6 +7,11 @@ namespace MotoBikeStore.Controllers
 {
     public class OrdersController : Controller
     {
+        private readonly MotoBikeContext _db;
+        public OrdersController(MotoBikeContext context)
+        {
+            _db = context;
+        }
         const string CART_KEY = "CART_ITEMS";
         const string USER_KEY = "CURRENT_USER";
 
@@ -20,7 +25,7 @@ namespace MotoBikeStore.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
-            var products = InMemoryDataStore.Products.Where(p => ids.Contains(p.Id)).ToList();
+            var products = _db.Products.Where(p => ids.Contains(p.Id)).ToList();
             ViewBag.Products = products;
             ViewBag.Subtotal = products.Sum(p => p.Price);
 
@@ -51,7 +56,7 @@ namespace MotoBikeStore.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
-            var products = InMemoryDataStore.Products.Where(p => ids.Contains(p.Id)).ToList();
+            var products = _db.Products.Where(p => ids.Contains(p.Id)).ToList();
             ViewBag.Products = products;
             ViewBag.Subtotal = products.Sum(p => p.Price);
 
@@ -76,11 +81,11 @@ namespace MotoBikeStore.Controllers
             if (hasError) return View(order);
 
             // Build order
-            order.Id = InMemoryDataStore.GetNextOrderId();
+            order.Id = _db.Orders.Any() ? _db.Orders.Max(o => o.Id) + 1 : 1;
             order.OrderCode = $"MB-{DateTime.UtcNow:yyyyMMdd}-{order.Id:D4}";
             order.Details = products.Select(p => new OrderDetail
             {
-                Id = InMemoryDataStore.GetNextOrderDetailId(),
+                Id = _db.OrderDetails.Any() ? _db.OrderDetails.Max(od => od.Id) + 1 : 1,
                 OrderId = order.Id,
                 ProductId = p.Id,
                 Quantity = 1,
@@ -117,7 +122,7 @@ namespace MotoBikeStore.Controllers
 
             if (!string.IsNullOrWhiteSpace(couponCode))
             {
-                appliedCoupon = InMemoryDataStore.Coupons.FirstOrDefault(c =>
+                appliedCoupon = _db.Coupons.FirstOrDefault(c =>
                     c.Code.Equals(couponCode, StringComparison.OrdinalIgnoreCase) &&
                     c.IsActive &&
                     c.StartDate <= DateTime.UtcNow && c.EndDate >= DateTime.UtcNow &&
@@ -143,7 +148,7 @@ namespace MotoBikeStore.Controllers
             // Nếu không nhập hoặc không hợp lệ → tự tìm mã tốt nhất
             if (appliedCoupon == null)
             {
-                var available = InMemoryDataStore.Coupons.Where(c =>
+                var available = _db.Coupons.Where(c =>
                     c.IsActive &&
                     c.StartDate <= DateTime.UtcNow && c.EndDate >= DateTime.UtcNow &&
                     order.Subtotal >= c.MinOrderAmount &&
@@ -183,7 +188,7 @@ namespace MotoBikeStore.Controllers
             var sess = HttpContext.Session.GetObjectFromJson<UserSession>(USER_KEY);
             if (sess != null) order.UserId = sess.Id;
 
-            InMemoryDataStore.Orders.Add(order);
+            _db .Orders.Add(order);
             HttpContext.Session.Remove(CART_KEY);
 
             // Thông báo
@@ -201,9 +206,9 @@ namespace MotoBikeStore.Controllers
                 return RedirectToAction("BankTransfer", new { id = order.Id });
 
             foreach (var d in order.Details)
-                d.Product = InMemoryDataStore.Products.FirstOrDefault(p => p.Id == d.ProductId);
+                d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
             if (order.CouponId.HasValue)
-                order.Coupon = InMemoryDataStore.Coupons.FirstOrDefault(c => c.Id == order.CouponId.Value);
+                order.Coupon = _db.Coupons.FirstOrDefault(c => c.Id == order.CouponId.Value);
 
             // Pass thêm để Success view hiển thị chi tiết
             ViewBag.SeasonalAppliedAmount = seasonalDiscountAmount;
@@ -216,14 +221,14 @@ namespace MotoBikeStore.Controllers
         // GET: /Orders/BankTransfer/{id}
         public IActionResult BankTransfer(int id)
         {
-            var order = InMemoryDataStore.Orders.FirstOrDefault(o => o.Id == id);
+            var order = _db.Orders.FirstOrDefault(o => o.Id == id);
             if (order == null) return NotFound();
 
             foreach (var d in order.Details)
-                d.Product = InMemoryDataStore.Products.FirstOrDefault(p => p.Id == d.ProductId);
+                d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
 
             if (order.CouponId.HasValue)
-                order.Coupon = InMemoryDataStore.Coupons.FirstOrDefault(c => c.Id == order.CouponId.Value);
+                order.Coupon = _db.Coupons.FirstOrDefault(c => c.Id == order.CouponId.Value);
 
             return View(order);
         }
@@ -233,14 +238,14 @@ namespace MotoBikeStore.Controllers
         {
             if (string.IsNullOrWhiteSpace(id)) return View((Order?)null);
 
-            Order? order = InMemoryDataStore.Orders.FirstOrDefault(o => o.OrderCode.Equals(id, StringComparison.OrdinalIgnoreCase));
+            Order? order = _db.Orders.FirstOrDefault(o => o.OrderCode.Equals(id, StringComparison.OrdinalIgnoreCase));
             if (order == null && int.TryParse(id, out var orderId))
-                order = InMemoryDataStore.Orders.FirstOrDefault(o => o.Id == orderId);
+                order = _db.Orders.FirstOrDefault(o => o.Id == orderId);
 
             if (order != null)
             {
                 foreach (var d in order.Details)
-                    d.Product = InMemoryDataStore.Products.FirstOrDefault(p => p.Id == d.ProductId);
+                    d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
             }
             return View(order);
         }
@@ -252,14 +257,14 @@ namespace MotoBikeStore.Controllers
             if (sess == null) return RedirectToAction("Login", "Auth");
 
             var userId = (int)sess.Id;
-            var orders = InMemoryDataStore.Orders
+            var orders = _db.Orders
                 .Where(o => o.UserId == userId)
                 .OrderByDescending(o => o.OrderDate)
                 .ToList();
 
             foreach (var o in orders)
                 foreach (var d in o.Details)
-                    d.Product = InMemoryDataStore.Products.FirstOrDefault(p => p.Id == d.ProductId);
+                    d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
 
             return View(orders);
         }

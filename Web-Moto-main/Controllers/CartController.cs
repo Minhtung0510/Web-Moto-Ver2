@@ -8,19 +8,24 @@ namespace MotoBikeStore.Controllers
 {
     public class CartController : Controller
     {
+        private readonly MotoBikeContext _db;
+        public CartController(MotoBikeContext context)
+        {
+            _db = context;
+        }
             const string CART_KEY = "CART_ITEMS";
 
         public IActionResult Index()
         {
             var ids = HttpContext.Session.GetObjectFromJson<List<int>>(CART_KEY) ?? new List<int>();
-            var products = InMemoryDataStore.Products.Where(p => ids.Contains(p.Id)).ToList(); // ✅
+            var products = _db.Products.Where(p => ids.Contains(p.Id)).ToList(); // ✅
             return View(products);
         }
 
         public IActionResult Add(int id)
         {
-            // ✅ đảm bảo sản phẩm tồn tại trong InMemory
-            if (!InMemoryDataStore.Products.Any(p => p.Id == id))
+            // ✅ đảm bảo sản phẩm tồn tại trong cơ sở dữ liệu
+            if (!_db.Products.Any(p => p.Id == id))
             {
                 TempData["ErrorMessage"] = "Sản phẩm không tồn tại.";
                 return RedirectToAction("Index","Home");

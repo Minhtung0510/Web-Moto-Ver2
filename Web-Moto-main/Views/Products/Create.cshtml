@@ -39,10 +39,10 @@
           <label class="form-label">Danh mục</label>
           <select name="CategoryId" class="form-select">
             <option value="">-- Chọn --</option>
-            @foreach(var cat in MotoBikeStore.Services.InMemoryDataStore.Categories)
-            {
-              <option value="@cat.Id">@cat.Name</option>
-            }
+          @foreach (var cat in (IEnumerable<MotoBikeStore.Models.Category>)ViewBag.Categories)
+    {
+        <option value="@cat.Id">@cat.Name</option>
+    }
           </select>
         </div>
         

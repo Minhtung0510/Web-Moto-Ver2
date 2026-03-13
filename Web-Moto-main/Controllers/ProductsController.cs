@@ -6,14 +6,18 @@ namespace MotoBikeStore.Controllers
 {
     public class ProductsController : Controller
     {
-        const string USER_KEY = "CURRENT_USER";
+        private readonly MotoBikeContext _db;
         private readonly IWebHostEnvironment _env;
-        
-        // ✅ Inject IWebHostEnvironment để lấy đường dẫn wwwroot
-        public ProductsController(IWebHostEnvironment env)
+
+        public ProductsController(MotoBikeContext context, IWebHostEnvironment env)
         {
             _env = env;
+            _db = context;
         }
+        const string USER_KEY = "CURRENT_USER";
+        
+        // ✅ Inject IWebHostEnvironment để lấy đường dẫn wwwroot
+      
         
         private bool IsAdmin()
         {
@@ -25,7 +29,7 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var products = InMemoryDataStore.Products.ToList();
+            var products = _db.Products.ToList();
             return View(products);
         }
         
@@ -145,12 +149,12 @@ public async Task<IActionResult> Create(IFormFile ImageFile)  // ✅ CHỈ nhậ
     }
     
     // ✅ LƯU SẢN PHẨM
-    product.Id = InMemoryDataStore.GetNextProductId();
-    
-    InMemoryDataStore.Products.Add(product);
-    
+    product.Id = _db.Products.Any() ? _db.Products.Max(p => p.Id) + 1 : 1;
+    _db.Products.Add(product);
+    await _db.SaveChangesAsync();
+
     Console.WriteLine($"[DEBUG] Product added: ID={product.Id}, Name={product.Name}, Price={product.Price}");
-    Console.WriteLine($"[DEBUG] Total products: {InMemoryDataStore.Products.Count}");
+    Console.WriteLine($"[DEBUG] Total products: {_db.Products.Count()}");
     
     TempData["SuccessMessage"] = $"Thêm sản phẩm '{product.Name}' thành công!";
     return RedirectToAction(nameof(Index));
@@ -159,9 +163,9 @@ public async Task<IActionResult> Create(IFormFile ImageFile)  // ✅ CHỈ nhậ
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var p = InMemoryDataStore.Products.FirstOrDefault(x => x.Id == id);
+            var p = _db.Products.FirstOrDefault(x => x.Id == id);
             if (p == null) return NotFound();
-            ViewBag.CopyList = InMemoryDataStore.Products
+            ViewBag.CopyList = _db.Products
     .Where(x => x.Id != id)
     .Select(x => new { x.Id, x.Name })
     .ToList();
@@ -174,7 +178,7 @@ public async Task<IActionResult> Edit(int id, IFormFile? ImageFile)
 {
     if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-    var existing = InMemoryDataStore.Products.FirstOrDefault(x => x.Id == id);
+    var existing = _db.Products.FirstOrDefault(x => x.Id == id);
     if (existing == null) return NotFound();
 
     // ✅ DEBUG - Xem tất cả dữ liệu form
@@ -282,7 +286,7 @@ public async Task<IActionResult> Edit(int id, IFormFile? ImageFile)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var p = InMemoryDataStore.Products.FirstOrDefault(x => x.Id == id);
+            var p = _db.Products.FirstOrDefault(x => x.Id == id);
             if (p == null) return NotFound();
             
             return View(p);
@@ -293,7 +297,7 @@ public async Task<IActionResult> Edit(int id, IFormFile? ImageFile)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
-            var p = InMemoryDataStore.Products.FirstOrDefault(x => x.Id == id);
+            var p = _db.Products.FirstOrDefault(x => x.Id == id);
             if (p != null)
             {
                 // ✅ Xóa file ảnh
@@ -306,7 +310,8 @@ public async Task<IActionResult> Edit(int id, IFormFile? ImageFile)
                     }
                 }
                 
-                InMemoryDataStore.Products.Remove(p);
+                    _db.Products.Remove(p);
+                    _db.SaveChanges();
                 TempData["SuccessMessage"] = "Xóa sản phẩm thành công!";
             }
             

@@ -3,7 +3,9 @@ using MotoBikeStore.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<MotoBikeContext>(options =>
+    options.UseSqlServer(connectionString));
 // ============ SERVICES ============
 builder.Services.AddControllersWithViews();
 
@@ -15,9 +17,7 @@ builder.Services.AddSession(o => {
     o.Cookie.HttpOnly = true;
     o.Cookie.IsEssential = true;
 });
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<MotoBikeContext>(options =>
-    options.UseSqlServer(connectionString));
+
 
 var app = builder.Build();
 
@@ -49,6 +49,7 @@ using (var scope = app.Services.CreateScope())
         context.Database.Migrate(); 
         // Gọi Seeder đã viết trong MotoBikeContext.cs
         DbSeeder.Seed(context);
+    
     }
     catch (Exception ex)
     {
