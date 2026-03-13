@@ -5,55 +5,159 @@
     var items = Model?.ToList() ?? new List<MotoBikeStore.Models.Product>();
 }
 <link rel="stylesheet" href="~/css/cart.css" asp-append-version="true" />
-<script defer src="~/js/cart.js" asp-append-version="true"></script>
 
 <div class="cart-hero">
-  <div class="cart-glow"></div>
-  <h2 class="cart-title"><i class="fas fa-shopping-bag me-2"></i>Giỏ hàng</h2>
-  <p class="cart-sub">Trải nghiệm thanh toán mượt như lụa</p>
+    <div class="cart-glow"></div>
+    <h2 class="cart-title"><i class="fas fa-shopping-bag me-2"></i>Giỏ hàng</h2>
+    <p class="cart-sub">Trải nghiệm thanh toán mượt như lụa</p>
 </div>
 
 @if (!items.Any())
 {
-  <div class="empty-card">
-    <div class="empty-icon"><i class="fas fa-box-open"></i></div>
-    <h5>Giỏ hàng trống</h5>
-    <p>Tiếp tục khám phá sản phẩm phù hợp với bạn.</p>
-    <a class="btn btn-gradient" href="/">Tiếp tục mua sắm</a>
-  </div>
+    <div class="empty-card">
+        <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+        <h5>Giỏ hàng trống</h5>
+        <p>Tiếp tục khám phá sản phẩm phù hợp với bạn.</p>
+        <a class="btn btn-gradient" href="/">Tiếp tục mua sắm</a>
+    </div>
 }
 else
 {
-  <div class="cart-wrapper">
-    @foreach (var p in items)
-    {
-      <div class="cart-row">
-        <div class="cart-media">
-          <img src="@p.ImageUrl" alt="@p.Name" />
+    <div class="cart-wrapper">
+        <div class="cart-count-bar">
+            <span><i class="fas fa-layer-group me-2"></i>@items.Count sản phẩm trong giỏ</span>
         </div>
-        <div class="cart-info">
-          <h6 class="cart-name">@p.Name</h6>
-          <div class="cart-meta">
-            <span class="chip">Hàng chính hãng</span>
-            <span class="chip">Đổi trả 7 ngày</span>
-          </div>
+
+        @foreach (var p in items)
+        {
+            <div class="cart-row" id="cart-item-@p.Id">
+                <div class="cart-media">
+                    <img src="@p.ImageUrl" alt="@p.Name" />
+                </div>
+                <div class="cart-info">
+                    <h6 class="cart-name">@p.Name</h6>
+                    <div class="cart-meta">
+                        <span class="chip"><i class="fas fa-check-circle me-1"></i>Hàng chính hãng</span>
+                        <span class="chip"><i class="fas fa-undo me-1"></i>Đổi trả 7 ngày</span>
+                        @if (!string.IsNullOrEmpty(p.Warranty))
+                        {
+                            <span class="chip chip-warranty"><i class="fas fa-shield-alt me-1"></i>@p.Warranty</span>
+                        }
+                    </div>
+                </div>
+                <div class="cart-price">
+                    @if (p.OldPrice.HasValue)
+                    {
+                        <span class="price-old">@p.OldPrice.Value.ToString("N0")₫</span>
+                    }
+                    <span class="price">@p.Price.ToString("N0")₫</span>
+                    @if (p.DiscountPercent.HasValue)
+                    {
+                        <span class="price-badge">-@p.DiscountPercent%</span>
+                    }
+                </div>
+                <div class="cart-actions">
+                    <button class="btn-remove"
+                            onclick="confirmRemove(@p.Id, '@Html.Raw(p.Name.Replace("'", "\\'"))', '@p.Price.ToString("N0")₫', '@p.ImageUrl')"
+                            title="Xóa sản phẩm">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Summary -->
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Tạm tính (@items.Count sản phẩm)</span>
+                <span class="summary-value">@items.Sum(p => p.Price).ToString("N0")₫</span>
+            </div>
+            <div class="summary-row">
+                <span>Phí vận chuyển</span>
+                <span class="summary-free"><i class="fas fa-truck me-1"></i>Miễn phí</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row summary-total">
+                <span>Tổng cộng</span>
+                <span class="total-price">@items.Sum(p => p.Price).ToString("N0")₫</span>
+            </div>
         </div>
-        <div class="cart-price">
-          <span class="price">@p.Price.ToString("N0")₫</span>
+
+        <div class="cart-footer">
+            <a class="btn-outline-cart" href="/">
+                <i class="fas fa-arrow-left me-2"></i>Tiếp tục mua sắm
+            </a>
+            <a class="btn-checkout" href="/Orders/Checkout">
+                <i class="fas fa-credit-card me-2"></i>Thanh toán ngay
+                <span class="checkout-arrow">→</span>
+            </a>
         </div>
-        <div class="cart-actions">
-          <a class="btn btn-ghost" href="/Cart/Remove/@p.Id" data-remove>
-            <i class="fas fa-trash-alt me-1"></i>Bỏ
-          </a>
+    </div>
+}
+
+<!-- ====== MODAL XÓA (dùng remove-overlay thay vì modal-backdrop để tránh xung đột Bootstrap) ====== -->
+<div class="remove-overlay" id="removeOverlay" onclick="handleOverlayClick(event)">
+    <div class="remove-card">
+        <div class="remove-icon-wrap">
+            <div class="remove-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
         </div>
-      </div>
+        <div class="remove-product-preview">
+            <img id="modal-img" src="" alt="" />
+            <div>
+                <p id="modal-name" class="remove-product-name"></p>
+                <p id="modal-price" class="remove-product-price"></p>
+            </div>
+        </div>
+        <h5 class="remove-title">Xóa khỏi giỏ hàng?</h5>
+        <p class="remove-desc">Sản phẩm sẽ bị xóa khỏi giỏ hàng của bạn.</p>
+        <div class="remove-actions">
+            <button class="btn-keep" onclick="closeModal()">
+                <i class="fas fa-times me-1"></i>Giữ lại
+            </button>
+            <a id="modal-confirm-link" href="#" class="btn-remove-confirm">
+                <i class="fas fa-trash-alt"></i>Xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmRemove(productId, productName, productPrice, productImg) {
+        document.getElementById('modal-name').textContent = productName;
+        document.getElementById('modal-price').textContent = productPrice;
+        document.getElementById('modal-img').src = productImg || '';
+        var link = document.getElementById('modal-confirm-link');
+        link.href = '/Cart/Remove/' + productId;
+        link.dataset.itemId = productId;
+        document.getElementById('removeOverlay').classList.add('active');
     }
 
-    <div class="cart-footer">
-      <a class="btn btn-outline" href="/">Tiếp tục mua sắm</a>
-      <a class="btn btn-gradient pulse" href="/Orders/Checkout">
-        <i class="fas fa-credit-card me-2"></i>Thanh toán
-      </a>
-    </div>
-  </div>
-}
+    function closeModal() {
+        document.getElementById('removeOverlay').classList.remove('active');
+    }
+
+    function handleOverlayClick(e) {
+        if (e.target === document.getElementById('removeOverlay')) closeModal();
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var link = document.getElementById('modal-confirm-link');
+        if (link) {
+            link.addEventListener('click', function (e) {
+                var row = document.getElementById('cart-item-' + this.dataset.itemId);
+                if (row) {
+                    e.preventDefault();
+                    var href = this.href;
+                    row.classList.add('removing');
+                    setTimeout(function () { window.location.href = href; }, 350);
+                }
+            });
+        }
+    });
+</script>
