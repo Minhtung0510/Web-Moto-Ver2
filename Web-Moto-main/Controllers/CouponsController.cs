@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MotoBikeStore.Models;
 using MotoBikeStore.Services;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MotoBikeStore.Controllers
 {
@@ -88,7 +89,7 @@ namespace MotoBikeStore.Controllers
         // POST: Tạo mã giảm giá
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult CreatePost()
+        public async Task<IActionResult> CreatePost()
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
             
@@ -105,7 +106,7 @@ namespace MotoBikeStore.Controllers
             }
             
             if (_db.Coupons.Any(c => 
-                c.Code.Equals(code, StringComparison.OrdinalIgnoreCase)))
+                c.Code == code))
             {
                 TempData["ErrorMessage"] = "Mã giảm giá đã tồn tại";
                 return View("Create");
@@ -137,7 +138,6 @@ namespace MotoBikeStore.Controllers
             
             var coupon = new Coupon
             {
-                Id = _db.Coupons.Max(c => c.Id) + 1,
                 Code = code,
                 Description = $"Giảm {discountPercent}% - Mã {code}",
                 DiscountPercent = discountPercent,
@@ -150,10 +150,14 @@ namespace MotoBikeStore.Controllers
                 UsedCount = 0,
                 IsActive = true
             };
-            
+               var codeLower = coupon.Code.ToLower();
+    if (_db.Coupons.Any(c => c.Code.ToLower() == codeLower))
+    {
+        TempData["ErrorMessage"] = "Mã giảm giá này đã tồn tại!";
+        return RedirectToAction(nameof(Create));
+    }
             _db.Coupons.Add(coupon);
-            _db.SaveChanges();
-            
+           await _db.SaveChangesAsync();            
             Console.WriteLine($"[DEBUG COUPON] Added: ID={coupon.Id}, Code={coupon.Code}");
             Console.WriteLine($"[DEBUG COUPON] Total coupons: {_db.Coupons.Count()}");
             
@@ -270,7 +274,7 @@ public JsonResult Validate([FromBody] ValidateCouponRequest request)
     }
     
     var coupon = _db.Coupons.FirstOrDefault(c =>
-        c.Code.Equals(code, StringComparison.OrdinalIgnoreCase) &&
+       c.Code == code && c.IsActive &&
         c.IsActive &&
         c.StartDate <= DateTime.UtcNow &&
         c.EndDate >= DateTime.UtcNow &&

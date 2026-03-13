@@ -36,6 +36,7 @@ namespace MotoBikeStore.Controllers
         public IActionResult Create()
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
+            ViewBag.Categories = _db.Categories.ToList();
             return View();
         }
         
@@ -149,7 +150,6 @@ public async Task<IActionResult> Create(IFormFile ImageFile)  // ✅ CHỈ nhậ
     }
     
     // ✅ LƯU SẢN PHẨM
-    product.Id = _db.Products.Any() ? _db.Products.Max(p => p.Id) + 1 : 1;
     _db.Products.Add(product);
     await _db.SaveChangesAsync();
 
@@ -280,6 +280,7 @@ public async Task<IActionResult> Edit(int id, IFormFile? ImageFile)
         Console.WriteLine($"[DEBUG] New image saved: {existing.ImageUrl}");
     }
 
+    await _db.SaveChangesAsync();
     TempData["SuccessMessage"] = $"Cập nhật sản phẩm '{existing.Name}' thành công!";
     return RedirectToAction(nameof(Index));
 }        public IActionResult Delete(int id)

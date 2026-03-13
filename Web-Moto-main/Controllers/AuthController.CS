@@ -55,20 +55,18 @@ namespace MotoBikeStore.Controllers
 
         public IActionResult Register() => View();
 
-        [HttpPost]
-        public IActionResult Register([Bind("FullName,Email,Phone,Address")] User user,
-                              string password, string confirmPassword)
-        {
-            ModelState.Remove(nameof(user.PasswordHash));
+[HttpPost]
+public IActionResult Register([Bind("FullName,Email,Phone,Address")] User user,
+                      string password, string confirmPassword)
+{
+    ModelState.Remove(nameof(user.PasswordHash));
 
-    // Log raw form để chắc chắn có trường Email
     if (Request.HasFormContentType)
     {
         Console.WriteLine($"[DEBUG] Form[Email]='{Request.Form["Email"]}'");
         Console.WriteLine($"[DEBUG] Payload -> FullName='{user.FullName}', Email='{user.Email}'");
     }
 
-    // 1) Chặn ngay nếu model không hợp lệ
     if (!ModelState.IsValid)
     {
         var errs = string.Join(" | ",
@@ -77,13 +75,14 @@ namespace MotoBikeStore.Controllers
         return View(user);
     }
 
-    // 2) Các validate còn lại
-    if (_db.Users.Any(u => 
-        u.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase)))
+    // ✅ FIX: Dùng ToLower() thay vì StringComparison.OrdinalIgnoreCase
+    var emailLower = user.Email.ToLower();
+    if (_db.Users.Any(u => u.Email.ToLower() == emailLower))
     {
         ModelState.AddModelError("Email", "Email đã được sử dụng");
         return View(user);
     }
+
     if (password != confirmPassword)
     {
         ModelState.AddModelError("", "Mật khẩu xác nhận không khớp");
@@ -95,8 +94,7 @@ namespace MotoBikeStore.Controllers
         return View(user);
     }
 
-    // 3) Lưu user
-    user.Id = _db.Users.Any() ? _db.Users.Max(u => u.Id) + 1 : 1;
+    // ✅ BỎ set Id thủ công - SQL Server Identity tự tăng
     user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
     user.Role = "Customer";
     user.IsActive = true;
@@ -105,12 +103,10 @@ namespace MotoBikeStore.Controllers
     _db.Users.Add(user);
     _db.SaveChanges();
     Console.WriteLine($"[DEBUG] Registered: {user.Email} (Id={user.Id})");
-    Console.WriteLine("[DEBUG] Current users: " + string.Join(", ", _db.Users.Select(u => u.Email)));
 
     TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
     return RedirectToAction("Login");
 }
-
         public IActionResult Logout()
         {
               HttpContext.Session.Remove("CURRENT_USER");
@@ -131,7 +127,7 @@ namespace MotoBikeStore.Controllers
         [HttpPost]
         public IActionResult Profile(User updatedUser)
         {
-            var current = HttpContext.Session.GetObjectFromJson<User>(USER_KEY);
+            var current = HttpContext.Session.GetObjectFromJson<UserSession>(USER_KEY);
             if (current == null) return RedirectToAction("Login");
 
             var user = _db.Users.FirstOrDefault(u => u.Id == current.Id);

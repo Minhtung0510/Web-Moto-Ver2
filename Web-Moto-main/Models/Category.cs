@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MotoBikeStore.Models
 {
@@ -20,6 +21,9 @@ namespace MotoBikeStore.Models
     // Mã giảm giá
     public class Coupon
     {
+           
+               [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // ✅ Bắt buộc phải có
+
         public int Id { get; set; }
         
         [Required]

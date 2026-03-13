@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MotoBikeStore.Models;
 using MotoBikeStore.Services;
 using System.Linq;
@@ -20,53 +21,55 @@ namespace MotoBikeStore.Controllers
             return sess != null && sess.Role == "Admin";
         }
 
-        public IActionResult Index()
+public IActionResult Index()
+{
+    if (!IsAdmin()) return RedirectToAction("Login", "Auth");
+
+    var today = DateTime.UtcNow.Date;
+    var thisMonth = new DateTime(today.Year, today.Month, 1);
+
+    // ✅ Thêm .ToList() để load về memory TRƯỚC khi làm LINQ phức tạp
+    var orders = _db.Orders.ToList();
+    var users = _db.Users.ToList();
+    var products = _db.Products.ToList();
+
+    ViewBag.TotalOrders = orders.Count;
+    ViewBag.TotalRevenue = orders.Sum(o => (decimal?)o.Total) ?? 0;
+    ViewBag.TotalProducts = products.Count;
+    ViewBag.TotalCustomers = users.Count(u => u.Role == "Customer");
+    ViewBag.MonthlyRevenue = orders
+        .Where(o => o.OrderDate >= thisMonth)
+        .Sum(o => (decimal?)o.Total) ?? 0;
+    ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
+
+    // ✅ Giờ LINQ chạy in-memory, không lỗi
+    var topProducts = orders
+        .SelectMany(o => o.Details)
+        .GroupBy(d => d.ProductId)
+        .Select(g => new
         {
-            if (!IsAdmin()) return RedirectToAction("Login", "Auth");
+            Product = products.FirstOrDefault(p => p.Id == g.Key),
+            TotalSold = g.Sum(d => d.Quantity)
+        })
+        .Where(x => x.Product != null)
+        .OrderByDescending(x => x.TotalSold)
+        .Take(5)
+        .ToList();
+    ViewBag.TopProducts = topProducts;
 
-            var today = DateTime.UtcNow.Date;
-            var thisMonth = new DateTime(today.Year, today.Month, 1);
+    var recentOrders = orders
+        .OrderByDescending(o => o.OrderDate)
+        .Take(10)
+        .ToList();
+    ViewBag.RecentOrders = recentOrders;
 
-            var orders = _db.Orders;
-            var users = _db.Users;
-            var products = _db.Products;
-
-            ViewBag.TotalOrders = orders.Count();
-            ViewBag.TotalRevenue = orders.Sum(o => (decimal?)o.Total) ?? 0;
-            ViewBag.TotalProducts = products.Count();
-            ViewBag.TotalCustomers = users.Count(u => u.Role == "Customer");
-            ViewBag.MonthlyRevenue = orders.Where(o => o.OrderDate >= thisMonth)
-                                            .Sum(o => (decimal?)o.Total) ?? 0;
-            ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
-
-            var topProducts = orders
-                .SelectMany(o => o.Details)
-                .GroupBy(d => d.ProductId)
-                .Select(g => new
-                {
-                    Product = products.FirstOrDefault(p => p.Id == g.Key),
-                    TotalSold = g.Sum(d => d.Quantity)
-                })
-                .Where(x => x.Product != null)
-                .OrderByDescending(x => x.TotalSold)
-                .Take(5)
-                .ToList();
-            ViewBag.TopProducts = topProducts;
-
-            var recentOrders = orders
-                .OrderByDescending(o => o.OrderDate)
-                .Take(10)
-                .ToList();
-            ViewBag.RecentOrders = recentOrders;
-
-            return View();
-        }
-
+    return View();
+}
         public IActionResult Orders(string? status)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-            var q = _db.Orders.AsEnumerable();
+            var q = _db.Orders.Include(o => o.User).AsEnumerable();
             if (!string.IsNullOrEmpty(status))
                 q = q.Where(o => o.Status == status);
 

@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MotoBikeStore.Models
 {
     // Product - Cập nhật
     public class Product
     {
+            [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // ✅ Phải có dòng này
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public string Brand { get; set; } = "";
