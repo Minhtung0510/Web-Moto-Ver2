@@ -15,9 +15,9 @@ builder.Services.AddSession(o => {
     o.Cookie.HttpOnly = true;
     o.Cookie.IsEssential = true;
 });
-
-builder.Services.AddDbContext<MotoBikeContext>(opt =>
-    opt.UseInMemoryDatabase("MotoDb"));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<MotoBikeContext>(options =>
+    options.UseSqlServer(connectionString));
 
 var app = builder.Build();
 
@@ -39,5 +39,20 @@ app.MapControllerRoute(
 // ✅ KHỞI TẠO SEASONAL PROMOTIONS
 SeasonalPromotionService.Initialize();
 Console.WriteLine($"✓ Seasonal Promotions: {SeasonalPromotionService.GetAll().Count}");
-
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+   try 
+    {
+        var context = services.GetRequiredService<MotoBikeContext>();
+        // Tự động áp dụng các Migration còn thiếu
+        context.Database.Migrate(); 
+        // Gọi Seeder đã viết trong MotoBikeContext.cs
+        DbSeeder.Seed(context);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Lỗi đồng bộ DB: {ex.Message}");
+    }
+}
 app.Run();
