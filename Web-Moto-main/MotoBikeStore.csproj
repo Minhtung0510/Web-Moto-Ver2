@@ -13,7 +13,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     
-    
+     <!-- OAuth providers -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.7" />
+    <!-- Email -->
+    <PackageReference Include="MailKit" Version="4.7.1" />
+ 
     <!-- BCrypt for password hashing -->
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>

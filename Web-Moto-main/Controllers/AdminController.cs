@@ -9,10 +9,14 @@ namespace MotoBikeStore.Controllers
     public class AdminController : Controller
     {
         private readonly MotoBikeContext _db;
-        public AdminController(MotoBikeContext context)
+        private readonly EmailService _email;
+
+        public AdminController(MotoBikeContext context, EmailService email)
         {
-            _db = context;
+            _db    = context;
+            _email = email;
         }
+
         const string USER_KEY = "CURRENT_USER";
 
         private bool IsAdmin()
@@ -25,30 +29,28 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-            var today = DateTime.UtcNow.Date;
+            var today     = DateTime.UtcNow.Date;
             var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-            // ✅ Thêm .ToList() để load về memory TRƯỚC khi làm LINQ phức tạp
-            var orders = _db.Orders.ToList();
-            var users = _db.Users.ToList();
+            var orders   = _db.Orders.ToList();
+            var users    = _db.Users.ToList();
             var products = _db.Products.ToList();
 
-            ViewBag.TotalOrders = orders.Count;
-            ViewBag.TotalRevenue = orders.Sum(o => (decimal?)o.Total) ?? 0;
-            ViewBag.TotalProducts = products.Count;
+            ViewBag.TotalOrders    = orders.Count;
+            ViewBag.TotalRevenue   = orders.Sum(o => (decimal?)o.Total) ?? 0;
+            ViewBag.TotalProducts  = products.Count;
             ViewBag.TotalCustomers = users.Count(u => u.Role == "Customer");
             ViewBag.MonthlyRevenue = orders
                 .Where(o => o.OrderDate >= thisMonth)
                 .Sum(o => (decimal?)o.Total) ?? 0;
             ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
 
-            // ✅ Giờ LINQ chạy in-memory, không lỗi
             var topProducts = orders
                 .SelectMany(o => o.Details)
                 .GroupBy(d => d.ProductId)
                 .Select(g => new
                 {
-                    Product = products.FirstOrDefault(p => p.Id == g.Key),
+                    Product   = products.FirstOrDefault(p => p.Id == g.Key),
                     TotalSold = g.Sum(d => d.Quantity)
                 })
                 .Where(x => x.Product != null)
@@ -65,6 +67,7 @@ namespace MotoBikeStore.Controllers
 
             return View();
         }
+
         public IActionResult Orders(string? status)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
@@ -85,14 +88,13 @@ namespace MotoBikeStore.Controllers
             var order = _db.Orders.FirstOrDefault(o => o.Id == id);
             if (order == null) return NotFound();
 
-            // nạp Product cho mỗi OrderDetail để View dùng
             foreach (var d in order.Details)
                 d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
 
-            // nạp Coupon nếu cần (nếu bạn lưu coupon in-memory, thêm store tương ứng)
             return View(order);
         }
 
+        // ── Cập nhật trạng thái + gửi mail ────────────────────────────────────
         [HttpPost]
         public IActionResult UpdateOrderStatus(int id, string status, string? trackingNumber)
         {
@@ -101,11 +103,13 @@ namespace MotoBikeStore.Controllers
             var order = _db.Orders.FirstOrDefault(o => o.Id == id);
             if (order == null) return NotFound();
 
+            var oldStatus = order.Status;
             order.Status = status;
+
             if (status == "Shipping" && !string.IsNullOrEmpty(trackingNumber))
             {
                 order.TrackingNumber = trackingNumber;
-                order.ShippedDate = DateTime.UtcNow;
+                order.ShippedDate    = DateTime.UtcNow;
             }
             else if (status == "Delivered")
             {
@@ -113,6 +117,26 @@ namespace MotoBikeStore.Controllers
             }
 
             _db.SaveChanges();
+
+            // Nạp product cho email template
+            foreach (var d in order.Details)
+                d.Product = _db.Products.FirstOrDefault(p => p.Id == d.ProductId);
+
+            // ✅ Gửi mail theo trạng thái mới
+            if (!string.IsNullOrWhiteSpace(order.Email))
+            {
+                _ = status switch
+                {
+                    "Confirmed" => _email.SendOrderConfirmedAsync(order),
+                    "Shipping"  => _email.SendOrderShippingAsync(order),
+                    _           => Task.CompletedTask
+                };
+            }
+            else
+            {
+                Console.WriteLine($"[EMAIL] Bỏ qua - đơn #{order.OrderCode} không có email");
+            }
+
             TempData["SuccessMessage"] = "Đã cập nhật trạng thái đơn hàng!";
             return RedirectToAction("OrderDetail", new { id });
         }
@@ -121,39 +145,38 @@ namespace MotoBikeStore.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-            year ??= DateTime.UtcNow.Year;
+            year  ??= DateTime.UtcNow.Year;
             month ??= DateTime.UtcNow.Month;
 
             var orders = _db.Orders.Where(o => o.Status != "Cancelled").ToList();
 
-            // ✅ QUAN TRỌNG: Phải dùng lowercase!
             var monthlyRevenue = orders
                 .Where(o => o.OrderDate.Year == year)
                 .GroupBy(o => o.OrderDate.Month)
                 .Select(g => new
                 {
-                    month = g.Key,                    // ← lowercase m
-                    revenue = g.Sum(o => o.Total),    // ← lowercase r
-                    orderCount = g.Count()            // ← lowercase o
+                    month      = g.Key,
+                    revenue    = g.Sum(o => o.Total),
+                    orderCount = g.Count()
                 })
                 .OrderBy(x => x.month)
                 .ToList();
 
             ViewBag.MonthlyRevenue = monthlyRevenue;
-            ViewBag.Year = year;
+            ViewBag.Year  = year;
             ViewBag.Month = month;
 
             var start = new DateTime(year.Value, month.Value, 1);
-            var end = start.AddMonths(1);
+            var end   = start.AddMonths(1);
 
             var dailyRevenue = orders
                 .Where(o => o.OrderDate >= start && o.OrderDate < end)
                 .GroupBy(o => o.OrderDate.Date)
                 .Select(g => new
                 {
-                    date = g.Key,                     // ← lowercase d
-                    revenue = g.Sum(o => o.Total),    // ← lowercase r
-                    orderCount = g.Count()            // ← lowercase o
+                    date       = g.Key,
+                    revenue    = g.Sum(o => o.Total),
+                    orderCount = g.Count()
                 })
                 .OrderBy(x => x.date)
                 .ToList();
@@ -165,7 +188,7 @@ namespace MotoBikeStore.Controllers
                 .GroupBy(o => o.UserId!.Value)
                 .Select(g => new
                 {
-                    UserId = g.Key,
+                    UserId     = g.Key,
                     TotalSpent = g.Sum(o => o.Total),
                     OrderCount = g.Count()
                 })
@@ -176,7 +199,7 @@ namespace MotoBikeStore.Controllers
             var users = _db.Users;
             ViewBag.TopCustomers = topCustomers.Select(tc => new
             {
-                Customer = users.FirstOrDefault(u => u.Id == tc.UserId),
+                Customer   = users.FirstOrDefault(u => u.Id == tc.UserId),
                 tc.TotalSpent,
                 tc.OrderCount
             }).Where(x => x.Customer != null).ToList();
@@ -184,8 +207,6 @@ namespace MotoBikeStore.Controllers
             return View();
         }
 
-
-        // Danh sách users
         public IActionResult Users()
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
@@ -196,7 +217,7 @@ namespace MotoBikeStore.Controllers
 
             return View(users);
         }
-        // Chi tiết user
+
         public IActionResult UserDetail(int id)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
@@ -204,28 +225,27 @@ namespace MotoBikeStore.Controllers
             var user = _db.Users.FirstOrDefault(u => u.Id == id);
             if (user == null) return NotFound();
 
-            // Lấy đơn hàng của user
             var orders = _db.Orders
                 .Where(o => o.UserId == id)
                 .OrderByDescending(o => o.OrderDate)
                 .ToList();
 
-            ViewBag.Orders = orders;
+            ViewBag.Orders      = orders;
             ViewBag.TotalOrders = orders.Count;
-            ViewBag.TotalSpent = orders.Sum(o => o.Total);
+            ViewBag.TotalSpent  = orders.Sum(o => o.Total);
 
             return View(user);
         }
 
-        // Toggle Active/Inactive
         public IActionResult ToggleUserStatus(int id)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
             var user = _db.Users.FirstOrDefault(u => u.Id == id);
-            if (user != null && user.Role != "Admin") // Không khóa Admin
+            if (user != null && user.Role != "Admin")
             {
                 user.IsActive = !user.IsActive;
+                _db.SaveChanges();
                 TempData["SuccessMessage"] = user.IsActive
                     ? $"Đã mở khóa tài khoản {user.Email}"
                     : $"Đã khóa tài khoản {user.Email}";
@@ -234,6 +254,4 @@ namespace MotoBikeStore.Controllers
             return RedirectToAction("Users");
         }
     }
-
-
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MotoBikeStore.Models;
 
@@ -11,9 +12,11 @@ using MotoBikeStore.Models;
 namespace MotoBikeStore.Migrations
 {
     [DbContext(typeof(MotoBikeContext))]
-    partial class MotoBikeContextModelSnapshot : ModelSnapshot
+    [Migration("20260314054710_AddExternalLogin")]
+    partial class AddExternalLogin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
