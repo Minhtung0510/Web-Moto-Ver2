@@ -27,7 +27,7 @@ namespace MotoBikeStore.Controllers
 
             // Filters
             if (!string.IsNullOrWhiteSpace(brand))
-                query = query.Where(p => p.Brand.Equals(brand, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(p => p.Brand == brand);
 
             if (!string.IsNullOrWhiteSpace(q))
             {
