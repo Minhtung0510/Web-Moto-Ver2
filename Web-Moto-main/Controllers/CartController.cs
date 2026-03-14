@@ -13,7 +13,7 @@ namespace MotoBikeStore.Controllers
         {
             _db = context;
         }
-            const string CART_KEY = "CART_ITEMS";
+        const string CART_KEY = "CART_ITEMS";
 
         public IActionResult Index()
         {
@@ -28,7 +28,7 @@ namespace MotoBikeStore.Controllers
             if (!_db.Products.Any(p => p.Id == id))
             {
                 TempData["ErrorMessage"] = "Sản phẩm không tồn tại.";
-                return RedirectToAction("Index","Home");
+                return RedirectToAction("Index", "Home");
             }
 
             var ids = HttpContext.Session.GetObjectFromJson<List<int>>(CART_KEY) ?? new List<int>();

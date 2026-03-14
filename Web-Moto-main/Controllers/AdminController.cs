@@ -21,50 +21,50 @@ namespace MotoBikeStore.Controllers
             return sess != null && sess.Role == "Admin";
         }
 
-public IActionResult Index()
-{
-    if (!IsAdmin()) return RedirectToAction("Login", "Auth");
-
-    var today = DateTime.UtcNow.Date;
-    var thisMonth = new DateTime(today.Year, today.Month, 1);
-
-    // ✅ Thêm .ToList() để load về memory TRƯỚC khi làm LINQ phức tạp
-    var orders = _db.Orders.ToList();
-    var users = _db.Users.ToList();
-    var products = _db.Products.ToList();
-
-    ViewBag.TotalOrders = orders.Count;
-    ViewBag.TotalRevenue = orders.Sum(o => (decimal?)o.Total) ?? 0;
-    ViewBag.TotalProducts = products.Count;
-    ViewBag.TotalCustomers = users.Count(u => u.Role == "Customer");
-    ViewBag.MonthlyRevenue = orders
-        .Where(o => o.OrderDate >= thisMonth)
-        .Sum(o => (decimal?)o.Total) ?? 0;
-    ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
-
-    // ✅ Giờ LINQ chạy in-memory, không lỗi
-    var topProducts = orders
-        .SelectMany(o => o.Details)
-        .GroupBy(d => d.ProductId)
-        .Select(g => new
+        public IActionResult Index()
         {
-            Product = products.FirstOrDefault(p => p.Id == g.Key),
-            TotalSold = g.Sum(d => d.Quantity)
-        })
-        .Where(x => x.Product != null)
-        .OrderByDescending(x => x.TotalSold)
-        .Take(5)
-        .ToList();
-    ViewBag.TopProducts = topProducts;
+            if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-    var recentOrders = orders
-        .OrderByDescending(o => o.OrderDate)
-        .Take(10)
-        .ToList();
-    ViewBag.RecentOrders = recentOrders;
+            var today = DateTime.UtcNow.Date;
+            var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-    return View();
-}
+            // ✅ Thêm .ToList() để load về memory TRƯỚC khi làm LINQ phức tạp
+            var orders = _db.Orders.ToList();
+            var users = _db.Users.ToList();
+            var products = _db.Products.ToList();
+
+            ViewBag.TotalOrders = orders.Count;
+            ViewBag.TotalRevenue = orders.Sum(o => (decimal?)o.Total) ?? 0;
+            ViewBag.TotalProducts = products.Count;
+            ViewBag.TotalCustomers = users.Count(u => u.Role == "Customer");
+            ViewBag.MonthlyRevenue = orders
+                .Where(o => o.OrderDate >= thisMonth)
+                .Sum(o => (decimal?)o.Total) ?? 0;
+            ViewBag.PendingOrders = orders.Count(o => o.Status == "Pending");
+
+            // ✅ Giờ LINQ chạy in-memory, không lỗi
+            var topProducts = orders
+                .SelectMany(o => o.Details)
+                .GroupBy(d => d.ProductId)
+                .Select(g => new
+                {
+                    Product = products.FirstOrDefault(p => p.Id == g.Key),
+                    TotalSold = g.Sum(d => d.Quantity)
+                })
+                .Where(x => x.Product != null)
+                .OrderByDescending(x => x.TotalSold)
+                .Take(5)
+                .ToList();
+            ViewBag.TopProducts = topProducts;
+
+            var recentOrders = orders
+                .OrderByDescending(o => o.OrderDate)
+                .Take(10)
+                .ToList();
+            ViewBag.RecentOrders = recentOrders;
+
+            return View();
+        }
         public IActionResult Orders(string? status)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Auth");
@@ -117,123 +117,123 @@ public IActionResult Index()
             return RedirectToAction("OrderDetail", new { id });
         }
 
-       public IActionResult Reports(int? year, int? month)
-{
-    if (!IsAdmin()) return RedirectToAction("Login", "Auth");
-
-    year ??= DateTime.UtcNow.Year;
-    month ??= DateTime.UtcNow.Month;
-
-    var orders = _db.Orders.Where(o => o.Status != "Cancelled").ToList();
-
-    // ✅ QUAN TRỌNG: Phải dùng lowercase!
-    var monthlyRevenue = orders
-        .Where(o => o.OrderDate.Year == year)
-        .GroupBy(o => o.OrderDate.Month)
-        .Select(g => new
+        public IActionResult Reports(int? year, int? month)
         {
-            month = g.Key,                    // ← lowercase m
-            revenue = g.Sum(o => o.Total),    // ← lowercase r
-            orderCount = g.Count()            // ← lowercase o
-        })
-        .OrderBy(x => x.month)
-        .ToList();
-    
-    ViewBag.MonthlyRevenue = monthlyRevenue;
-    ViewBag.Year = year;
-    ViewBag.Month = month;
+            if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-    var start = new DateTime(year.Value, month.Value, 1);
-    var end = start.AddMonths(1);
+            year ??= DateTime.UtcNow.Year;
+            month ??= DateTime.UtcNow.Month;
 
-    var dailyRevenue = orders
-        .Where(o => o.OrderDate >= start && o.OrderDate < end)
-        .GroupBy(o => o.OrderDate.Date)
-        .Select(g => new
-        {
-            date = g.Key,                     // ← lowercase d
-            revenue = g.Sum(o => o.Total),    // ← lowercase r
-            orderCount = g.Count()            // ← lowercase o
-        })
-        .OrderBy(x => x.date)
-        .ToList();
-    
-    ViewBag.DailyRevenue = dailyRevenue;
+            var orders = _db.Orders.Where(o => o.Status != "Cancelled").ToList();
 
-    var topCustomers = orders
-        .Where(o => o.UserId != null)
-        .GroupBy(o => o.UserId!.Value)
-        .Select(g => new
-        {
-            UserId = g.Key,
-            TotalSpent = g.Sum(o => o.Total),
-            OrderCount = g.Count()
-        })
-        .OrderByDescending(x => x.TotalSpent)
-        .Take(10)
-        .ToList();
+            // ✅ QUAN TRỌNG: Phải dùng lowercase!
+            var monthlyRevenue = orders
+                .Where(o => o.OrderDate.Year == year)
+                .GroupBy(o => o.OrderDate.Month)
+                .Select(g => new
+                {
+                    month = g.Key,                    // ← lowercase m
+                    revenue = g.Sum(o => o.Total),    // ← lowercase r
+                    orderCount = g.Count()            // ← lowercase o
+                })
+                .OrderBy(x => x.month)
+                .ToList();
 
-    var users = _db.Users;
-    ViewBag.TopCustomers = topCustomers.Select(tc => new
-    {
-        Customer = users.FirstOrDefault(u => u.Id == tc.UserId),
-        tc.TotalSpent,
-        tc.OrderCount
-    }).Where(x => x.Customer != null).ToList();
+            ViewBag.MonthlyRevenue = monthlyRevenue;
+            ViewBag.Year = year;
+            ViewBag.Month = month;
 
-    return View();
-}
+            var start = new DateTime(year.Value, month.Value, 1);
+            var end = start.AddMonths(1);
+
+            var dailyRevenue = orders
+                .Where(o => o.OrderDate >= start && o.OrderDate < end)
+                .GroupBy(o => o.OrderDate.Date)
+                .Select(g => new
+                {
+                    date = g.Key,                     // ← lowercase d
+                    revenue = g.Sum(o => o.Total),    // ← lowercase r
+                    orderCount = g.Count()            // ← lowercase o
+                })
+                .OrderBy(x => x.date)
+                .ToList();
+
+            ViewBag.DailyRevenue = dailyRevenue;
+
+            var topCustomers = orders
+                .Where(o => o.UserId != null)
+                .GroupBy(o => o.UserId!.Value)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    TotalSpent = g.Sum(o => o.Total),
+                    OrderCount = g.Count()
+                })
+                .OrderByDescending(x => x.TotalSpent)
+                .Take(10)
+                .ToList();
+
+            var users = _db.Users;
+            ViewBag.TopCustomers = topCustomers.Select(tc => new
+            {
+                Customer = users.FirstOrDefault(u => u.Id == tc.UserId),
+                tc.TotalSpent,
+                tc.OrderCount
+            }).Where(x => x.Customer != null).ToList();
+
+            return View();
+        }
 
 
         // Danh sách users
-public IActionResult Users()
-{
-    if (!IsAdmin()) return RedirectToAction("Login", "Auth");
-    
-    var users = _db.Users
-        .OrderByDescending(u => u.CreatedAt)
-        .ToList();
-    
-    return View(users);
-}
-// Chi tiết user
-public IActionResult UserDetail(int id)
-{
-    if (!IsAdmin()) return RedirectToAction("Login", "Auth");
-    
-    var user = _db.Users.FirstOrDefault(u => u.Id == id);
-    if (user == null) return NotFound();
-    
-    // Lấy đơn hàng của user
-    var orders = _db.Orders
-        .Where(o => o.UserId == id)
-        .OrderByDescending(o => o.OrderDate)
-        .ToList();
-    
-    ViewBag.Orders = orders;
-    ViewBag.TotalOrders = orders.Count;
-    ViewBag.TotalSpent = orders.Sum(o => o.Total);
-    
-    return View(user);
-}
+        public IActionResult Users()
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-// Toggle Active/Inactive
-public IActionResult ToggleUserStatus(int id)
-{
-    if (!IsAdmin()) return RedirectToAction("Login", "Auth");
-    
-    var user = _db.Users.FirstOrDefault(u => u.Id == id);
-    if (user != null && user.Role != "Admin") // Không khóa Admin
-    {
-        user.IsActive = !user.IsActive;
-        TempData["SuccessMessage"] = user.IsActive 
-            ? $"Đã mở khóa tài khoản {user.Email}" 
-            : $"Đã khóa tài khoản {user.Email}";
+            var users = _db.Users
+                .OrderByDescending(u => u.CreatedAt)
+                .ToList();
+
+            return View(users);
+        }
+        // Chi tiết user
+        public IActionResult UserDetail(int id)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "Auth");
+
+            var user = _db.Users.FirstOrDefault(u => u.Id == id);
+            if (user == null) return NotFound();
+
+            // Lấy đơn hàng của user
+            var orders = _db.Orders
+                .Where(o => o.UserId == id)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
+
+            ViewBag.Orders = orders;
+            ViewBag.TotalOrders = orders.Count;
+            ViewBag.TotalSpent = orders.Sum(o => o.Total);
+
+            return View(user);
+        }
+
+        // Toggle Active/Inactive
+        public IActionResult ToggleUserStatus(int id)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "Auth");
+
+            var user = _db.Users.FirstOrDefault(u => u.Id == id);
+            if (user != null && user.Role != "Admin") // Không khóa Admin
+            {
+                user.IsActive = !user.IsActive;
+                TempData["SuccessMessage"] = user.IsActive
+                    ? $"Đã mở khóa tài khoản {user.Email}"
+                    : $"Đã khóa tài khoản {user.Email}";
+            }
+
+            return RedirectToAction("Users");
+        }
     }
-    
-    return RedirectToAction("Users");
-}
-    }
-    
+
 
 }

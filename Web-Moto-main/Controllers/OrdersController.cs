@@ -31,14 +31,14 @@ namespace MotoBikeStore.Controllers
             ViewBag.Subtotal = products.Sum(p => p.Price);
 
             // Seasonal cho UI
-           var allPromos = _db.SeasonalPromotions.ToList();
-var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
+            var allPromos = _db.SeasonalPromotions.ToList();
+            var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
             ViewBag.SeasonalPromotions = activePromos;
 
             decimal potentialSeasonal = 0m;
             foreach (var product in products)
             {
-               var bestPercent = SeasonalPromotionService.GetBestDiscount(product, activePromos);
+                var bestPercent = SeasonalPromotionService.GetBestDiscount(product, activePromos);
                 if (bestPercent > 0) potentialSeasonal += product.Price * bestPercent / 100m;
             }
             ViewBag.PotentialSeasonalDiscount = potentialSeasonal;
@@ -63,8 +63,8 @@ var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
             ViewBag.Subtotal = products.Sum(p => p.Price);
 
             // Bind lại seasonal UI nếu trả về View(order)
-         var allPromos = _db.SeasonalPromotions.ToList();
-var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
+            var allPromos = _db.SeasonalPromotions.ToList();
+            var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
             ViewBag.SeasonalPromotions = activePromos;
             decimal potentialSeasonal = 0m;
             foreach (var product in products)
@@ -188,7 +188,7 @@ var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
             var sess = HttpContext.Session.GetObjectFromJson<UserSession>(USER_KEY);
             if (sess != null) order.UserId = sess.Id;
 
-            _db .Orders.Add(order);
+            _db.Orders.Add(order);
             _db.SaveChanges();
             order.OrderCode = $"MB-{DateTime.UtcNow:yyyyMMdd}-{order.Id:D4}";
             _db.SaveChanges();
@@ -248,10 +248,10 @@ var activePromos = SeasonalPromotionService.GetActivePromotions(allPromos);
 
             try
             {
-               Order? order = _db.Orders
-    .Include(o => o.Details)
-    .FirstOrDefault(o => !string.IsNullOrEmpty(o.OrderCode) &&
-        o.OrderCode.ToLower() == id.ToLower());
+                Order? order = _db.Orders
+     .Include(o => o.Details)
+     .FirstOrDefault(o => !string.IsNullOrEmpty(o.OrderCode) &&
+         o.OrderCode.ToLower() == id.ToLower());
                 if (order == null && int.TryParse(id, out var orderId))
                     order = _db.Orders
                         .Include(o => o.Details)

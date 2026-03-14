@@ -7,14 +7,14 @@ namespace MotoBikeStore.Controllers
 {
     public class AuthController : Controller
     {
-             private readonly MotoBikeContext _db;
-        public AuthController(MotoBikeContext context)    
+        private readonly MotoBikeContext _db;
+        public AuthController(MotoBikeContext context)
         {
             _db = context;
         }
 
         const string USER_KEY = "CURRENT_USER";
-       
+
         public IActionResult Login(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -37,11 +37,12 @@ namespace MotoBikeStore.Controllers
             }
 
             // lưu session 1 chỗ duy nhất
-            HttpContext.Session.SetObjectAsJson("CURRENT_USER", new UserSession{
-                  Id = user.Id,
-    FullName = user.FullName,
-    Email = user.Email,
-    Role = user.Role
+            HttpContext.Session.SetObjectAsJson("CURRENT_USER", new UserSession
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role
             });
             Console.WriteLine("[DEBUG] Session set OK");
 
@@ -55,73 +56,73 @@ namespace MotoBikeStore.Controllers
 
         public IActionResult Register() => View();
 
-[HttpPost]
-public IActionResult Register([Bind("FullName,Email,Phone,Address")] User user,
-                      string password, string confirmPassword)
-{
-    ModelState.Remove(nameof(user.PasswordHash));
+        [HttpPost]
+        public IActionResult Register([Bind("FullName,Email,Phone,Address")] User user,
+                              string password, string confirmPassword)
+        {
+            ModelState.Remove(nameof(user.PasswordHash));
 
-    if (Request.HasFormContentType)
-    {
-        Console.WriteLine($"[DEBUG] Form[Email]='{Request.Form["Email"]}'");
-        Console.WriteLine($"[DEBUG] Payload -> FullName='{user.FullName}', Email='{user.Email}'");
-    }
+            if (Request.HasFormContentType)
+            {
+                Console.WriteLine($"[DEBUG] Form[Email]='{Request.Form["Email"]}'");
+                Console.WriteLine($"[DEBUG] Payload -> FullName='{user.FullName}', Email='{user.Email}'");
+            }
 
-    if (!ModelState.IsValid)
-    {
-        var errs = string.Join(" | ",
-            ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-        Console.WriteLine("[DEBUG] ModelState INVALID: " + errs);
-        return View(user);
-    }
+            if (!ModelState.IsValid)
+            {
+                var errs = string.Join(" | ",
+                    ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                Console.WriteLine("[DEBUG] ModelState INVALID: " + errs);
+                return View(user);
+            }
 
-    // ✅ FIX: Dùng ToLower() thay vì StringComparison.OrdinalIgnoreCase
-    var emailLower = user.Email.ToLower();
-    if (_db.Users.Any(u => u.Email.ToLower() == emailLower))
-    {
-        ModelState.AddModelError("Email", "Email đã được sử dụng");
-        return View(user);
-    }
+            // ✅ FIX: Dùng ToLower() thay vì StringComparison.OrdinalIgnoreCase
+            var emailLower = user.Email.ToLower();
+            if (_db.Users.Any(u => u.Email.ToLower() == emailLower))
+            {
+                ModelState.AddModelError("Email", "Email đã được sử dụng");
+                return View(user);
+            }
 
-    if (password != confirmPassword)
-    {
-        ModelState.AddModelError("", "Mật khẩu xác nhận không khớp");
-        return View(user);
-    }
-    if (password.Length < 6)
-    {
-        ModelState.AddModelError("", "Mật khẩu phải có ít nhất 6 ký tự");
-        return View(user);
-    }
+            if (password != confirmPassword)
+            {
+                ModelState.AddModelError("", "Mật khẩu xác nhận không khớp");
+                return View(user);
+            }
+            if (password.Length < 6)
+            {
+                ModelState.AddModelError("", "Mật khẩu phải có ít nhất 6 ký tự");
+                return View(user);
+            }
 
-    // ✅ BỎ set Id thủ công - SQL Server Identity tự tăng
-    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-    user.Role = "Customer";
-    user.IsActive = true;
-    user.CreatedAt = DateTime.UtcNow;
+            // ✅ BỎ set Id thủ công - SQL Server Identity tự tăng
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            user.Role = "Customer";
+            user.IsActive = true;
+            user.CreatedAt = DateTime.UtcNow;
 
-    _db.Users.Add(user);
-    _db.SaveChanges();
-    Console.WriteLine($"[DEBUG] Registered: {user.Email} (Id={user.Id})");
+            _db.Users.Add(user);
+            _db.SaveChanges();
+            Console.WriteLine($"[DEBUG] Registered: {user.Email} (Id={user.Id})");
 
-    TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
-    return RedirectToAction("Login");
-}
+            TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
+            return RedirectToAction("Login");
+        }
         public IActionResult Logout()
         {
-              HttpContext.Session.Remove("CURRENT_USER");
-    return RedirectToAction("Index", "Home");
+            HttpContext.Session.Remove("CURRENT_USER");
+            return RedirectToAction("Index", "Home");
         }
 
         public IActionResult Profile()
         {
-              var sess = HttpContext.Session.GetObjectFromJson<UserSession>("CURRENT_USER");
-    if (sess == null) return RedirectToAction("Login");
+            var sess = HttpContext.Session.GetObjectFromJson<UserSession>("CURRENT_USER");
+            if (sess == null) return RedirectToAction("Login");
 
-    var user = _db.Users.FirstOrDefault(u => u.Id == sess.Id);
-    if (user == null) return RedirectToAction("Logout");
+            var user = _db.Users.FirstOrDefault(u => u.Id == sess.Id);
+            if (user == null) return RedirectToAction("Logout");
 
-    return View(user);
+            return View(user);
         }
 
         [HttpPost]
@@ -134,8 +135,8 @@ public IActionResult Register([Bind("FullName,Email,Phone,Address")] User user,
             if (user == null) return RedirectToAction("Logout");
 
             user.FullName = updatedUser.FullName;
-            user.Phone    = updatedUser.Phone;
-            user.Address  = updatedUser.Address;
+            user.Phone = updatedUser.Phone;
+            user.Address = updatedUser.Address;
 
             _db.SaveChanges();
             TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";

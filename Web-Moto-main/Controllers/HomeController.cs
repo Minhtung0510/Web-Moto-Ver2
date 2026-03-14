@@ -9,21 +9,21 @@ namespace MotoBikeStore.Controllers
         private readonly MotoBikeContext _db;
         public HomeController(MotoBikeContext context)
         {
-                _db = context;
+            _db = context;
         }
         // ✅ KHÔNG CẦN inject DbContext
-        
-        public IActionResult Index(string? brand, string? q, int? categoryId, 
-            decimal? minPrice, decimal? maxPrice, string? sortBy,string? categoryName)
+
+        public IActionResult Index(string? brand, string? q, int? categoryId,
+            decimal? minPrice, decimal? maxPrice, string? sortBy, string? categoryName)
         {
             // ✅ Dùng InMemoryDataStore thay vì _db
             var query = _db.Products.AsQueryable();
-          if (categoryId == null && !string.IsNullOrEmpty(categoryName))
-    {
-        var cat = _db.Categories
-            .FirstOrDefault(c => c.Name == categoryName);
-        if (cat != null) categoryId = cat.Id;
-    }
+            if (categoryId == null && !string.IsNullOrEmpty(categoryName))
+            {
+                var cat = _db.Categories
+                    .FirstOrDefault(c => c.Name == categoryName);
+                if (cat != null) categoryId = cat.Id;
+            }
 
             // Filters
             if (!string.IsNullOrWhiteSpace(brand))
@@ -76,7 +76,7 @@ namespace MotoBikeStore.Controllers
                 .Distinct()
                 .OrderBy(b => b)
                 .ToList();
-            
+
             ViewBag.SelectedBrand = brand;
             ViewBag.SelectedCategory = categoryId;
             ViewBag.SearchQuery = q;
@@ -105,7 +105,7 @@ namespace MotoBikeStore.Controllers
             // Related products
             var relatedProducts = _db.Products
                 .Where(p => p.Id != id &&
-                    (p.Brand == product.Brand || 
+                    (p.Brand == product.Brand ||
                      p.CategoryId == product.CategoryId))
                 .Take(4)
                 .ToList();

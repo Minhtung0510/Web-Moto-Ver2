@@ -35,7 +35,8 @@ app.UseSession(); // ⚠️ QUAN TRỌNG
 app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+    );
 // ✅ KHỞI TẠO SEASONAL PROMOTIONS
 using (var scope = app.Services.CreateScope())
 {

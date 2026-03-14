@@ -26,7 +26,7 @@ public class SeasonalPromotionsController : Controller
             .ToList();
 
         // Load category names
-        foreach (var promo in promotions.Where(p => 
+        foreach (var promo in promotions.Where(p =>
             p.ApplyTo == "Category" && p.CategoryId.HasValue))
         {
             promo.Category = _db.Categories
