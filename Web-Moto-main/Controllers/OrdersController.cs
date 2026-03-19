@@ -85,6 +85,13 @@ namespace MotoBikeStore.Controllers
             if (string.IsNullOrWhiteSpace(order.Address))       { ModelState.AddModelError("Address", "Vui lòng nhập địa chỉ giao hàng"); hasError = true; }
             if (string.IsNullOrWhiteSpace(order.PaymentMethod)) { ModelState.AddModelError("PaymentMethod", "Vui lòng chọn hình thức thanh toán"); hasError = true; }
             if (hasError) return View(order);
+            var outOfStock = products.Where(p => p.Stock.HasValue && p.Stock <= 0).ToList();
+if (outOfStock.Any())
+{
+    var names = string.Join(", ", outOfStock.Select(p => p.Name));
+    TempData["ErrorMessage"] = $"Sản phẩm đã hết hàng: {names}";
+    return View(order);
+}
 
             // Build order details
             order.Details = products.Select(p => new OrderDetail
@@ -188,6 +195,15 @@ namespace MotoBikeStore.Controllers
             _db.Orders.Add(order);
             _db.SaveChanges();
             order.OrderCode = $"MB-{DateTime.UtcNow:yyyyMMdd}-{order.Id:D4}";
+            // ── Trừ stock sau khi đặt hàng thành công ─────────────────────
+foreach (var detail in order.Details)
+{
+    var product = _db.Products.FirstOrDefault(p => p.Id == detail.ProductId);
+    if (product != null && product.Stock.HasValue)
+    {
+        product.Stock = Math.Max(0, product.Stock.Value - detail.Quantity);
+    }
+}
             _db.SaveChanges();
             HttpContext.Session.Remove(CART_KEY);
 
